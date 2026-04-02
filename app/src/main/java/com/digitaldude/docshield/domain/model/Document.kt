@@ -4,5 +4,7 @@ data class Document(
     val id: Long = 0,
     val title :  String,
     val category: String,
-    val dateAdded : Long = System.currentTimeMillis()
+    val dateAdded : Long = System.currentTimeMillis(),
+    val extractedText: String = "",
+    val imageUri: String = "",
 )

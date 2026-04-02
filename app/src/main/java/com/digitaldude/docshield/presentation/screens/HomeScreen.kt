@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.items
 @Composable
 fun HomeScreen(
     onNavigateToDetail: (Long) -> Unit,
+    onNavigateToScan: () -> Unit,
     viewModel: DocumentViewModel = koinViewModel()
 ) {
     val documents by viewModel.documents.collectAsStateWithLifecycle()
@@ -41,6 +42,9 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { viewModel.dodajDokument("Test dokument", "Ostalo") }) {
             Text("Dodaj dokument")
+        }
+        Button(onClick = {onNavigateToScan()}) {
+            Text("Skeniraj dokument")
         }
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn {

@@ -5,4 +5,6 @@ sealed class Screen(val route: String) {
     object Detail : Screen("detail/{documentId}"){
         fun createRoute(documentId: Long) = "detail/$documentId"
     }
+
+    object ScanScreen : Screen("scanScreen")
 }

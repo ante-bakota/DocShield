@@ -13,10 +13,17 @@ import com.digitaldude.docshield.presentation.screens.Screen
 import com.digitaldude.docshield.ui.theme.DocShieldTheme
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.digitaldude.docshield.data.ml.DocumentScannerDataSource
+import com.digitaldude.docshield.presentation.screens.ScanScreen
 
 class MainActivity : ComponentActivity() {
+    private lateinit var documentScannerDataSource: DocumentScannerDataSource
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        documentScannerDataSource = DocumentScannerDataSource(this)
+
         enableEdgeToEdge()
         setContent {
             DocShieldTheme {
@@ -29,6 +36,9 @@ class MainActivity : ComponentActivity() {
                         HomeScreen(
                             onNavigateToDetail = { documentId ->
                                 navController.navigate(Screen.Detail.createRoute(documentId))
+                            },
+                            onNavigateToScan = {
+                                navController.navigate(Screen.ScanScreen.route)
                             }
                         )
                     }
@@ -42,6 +52,11 @@ class MainActivity : ComponentActivity() {
                                 navController.popBackStack()
                             }
                         )
+                    }
+                    composable(
+                        Screen.ScanScreen.route
+                    ){
+                        ScanScreen(documentScannerDataSource)
                     }
                 }
             }
