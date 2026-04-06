@@ -1,5 +1,6 @@
 package com.digitaldude.docshield.di
 
+import com.digitaldude.docshield.data.local.BiometricAuthManager
 import com.digitaldude.docshield.data.local.DatabaseKeyManager
 import com.digitaldude.docshield.data.local.DocShieldDatabase
 import com.digitaldude.docshield.data.ml.DocumentScannerDataSource
@@ -11,6 +12,7 @@ import com.digitaldude.docshield.domain.repository.ScanRepository
 import com.digitaldude.docshield.domain.usecase.AddDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.ExtractTextUseCase
 import com.digitaldude.docshield.domain.usecase.GetDocumentsUseCase
+import com.digitaldude.docshield.presentation.viewmodel.AuthViewModel
 import com.digitaldude.docshield.presentation.viewmodel.DocumentViewModel
 import com.digitaldude.docshield.presentation.viewmodel.ScanViewModel
 import org.koin.android.ext.koin.androidContext
@@ -23,6 +25,8 @@ val appModule = module {
     factory { AddDocumentUseCase(get()) }
 
     viewModel { DocumentViewModel(get(), get()) }
+    viewModel{ AuthViewModel(get()) }
+    viewModel{ ScanViewModel(get(), get()) }
 
 
     //Scanner
@@ -31,8 +35,9 @@ val appModule = module {
     single<ScanRepository>{ ScanRepositoryImpl(get()) }
     factory { ExtractTextUseCase(get()) }
 
-    viewModel{ ScanViewModel(get(), get()) }
-
     single{ DatabaseKeyManager(get()) }
     single{ DocShieldDatabase.create(androidContext(), get<DatabaseKeyManager>().getOrCreatePassphrase()) }
+
+
+    single{ BiometricAuthManager(get()) }
 }
