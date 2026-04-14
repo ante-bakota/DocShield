@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -24,6 +25,27 @@ class DocumentViewModel(
             initialValue = emptyList()
         )
 
+
+    private val _searchQuerry = MutableStateFlow("")
+    val searchQuerry : StateFlow<String> = _searchQuerry.asStateFlow()
+
+    val filteredDocuments : StateFlow<List<Document>> = combine(
+        documents, _searchQuerry
+    ) { docs, querry ->
+        if (querry.isBlank()) docs
+        else docs.filter { doc ->
+            doc.title.contains(querry, ignoreCase = true) ||
+                    doc.extractedText.contains(querry, ignoreCase = true)
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    fun onSearchQueryChanged(query : String){
+        _searchQuerry.value = query
+    }
     fun dodajDokument(title: String, category: String) {
         viewModelScope.launch {
             addDocumentUseCase(Document(title = title, category = category))

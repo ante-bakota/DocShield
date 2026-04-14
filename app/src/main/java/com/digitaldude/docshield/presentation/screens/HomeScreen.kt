@@ -20,6 +20,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.digitaldude.docshield.presentation.viewmodel.DocumentViewModel
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.OutlinedTextField
+import com.digitaldude.docshield.domain.model.Document
 
 @Composable
 fun HomeScreen(
@@ -27,7 +30,8 @@ fun HomeScreen(
     onNavigateToScan: () -> Unit,
     viewModel: DocumentViewModel = koinViewModel()
 ) {
-    val documents by viewModel.documents.collectAsStateWithLifecycle()
+    val documents by viewModel.filteredDocuments.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuerry.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -40,25 +44,47 @@ fun HomeScreen(
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { viewModel.dodajDokument("Test dokument", "Ostalo") }) {
-            Text("Dodaj dokument")
-        }
-        Button(onClick = {onNavigateToScan()}) {
+        Button(onClick = { onNavigateToScan() }) {
             Text("Skeniraj dokument")
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { viewModel.onSearchQueryChanged(it) },
+            placeholder = { Text("Pretraži dokumente...") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn {
-            items(documents) { document ->
-                Text(
-                    text = "${document.id}. ${document.title} — ${document.category}",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onNavigateToDetail(document.id) }
-                        .padding(vertical = 8.dp)
+            items(documents, key = { it.id }) { document ->
+                DocumentCard(
+                    document = document,
+                    onClick = { onNavigateToDetail(document.id) }
                 )
             }
         }
     }
+}
 
+@Composable
+private fun DocumentCard(
+    document: Document,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onClick() }
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(text = document.title, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+            Text(text = document.category, fontSize = 13.sp)
+        }
     }
+}
+
+
+
 

@@ -2,7 +2,6 @@ package com.digitaldude.docshield.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.digitaldude.docshield.domain.model.Document
 import com.digitaldude.docshield.domain.usecase.AddDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.ExtractTextUseCase
@@ -31,11 +30,11 @@ class ScanViewModel(
         _scanState.value = ScanState.Idle
     }
 
-    fun saveDocument(extractedText: String, imageUri: String) {
+    fun saveDocument(title : String,extractedText: String, imageUri: String) {
         viewModelScope.launch {
             addDocumentUseCase(
                 Document(
-                    title = "Dokument ${System.currentTimeMillis()}",
+                    title = title.ifBlank { "Dokument bez naziva" },
                     extractedText = extractedText,
                     imageUri = imageUri,
                     category = "Ostalo"
