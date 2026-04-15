@@ -39,7 +39,7 @@ android {
         jvmTarget = "11"
     }
 }
-
+//TODO move hardcoded versions to versions.toml file
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.core.ktx)
+    implementation(libs.generativeai)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -90,6 +91,11 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
 
     implementation(libs.coil.compose)
+
+    implementation(libs.mlkit.genai.summarization)
+
+    // Coroutines await() support for ListenableFuture (ML Kit GenAI APIs)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.8.1")
 
 
 }

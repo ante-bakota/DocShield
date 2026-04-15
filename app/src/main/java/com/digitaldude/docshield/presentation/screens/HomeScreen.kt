@@ -21,8 +21,21 @@ import com.digitaldude.docshield.presentation.viewmodel.DocumentViewModel
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import com.digitaldude.docshield.domain.model.Document
+
+
+private fun extractSnippet(text: String, query: String, contextChars: Int = 60): String? {
+    if (query.isBlank() || text.isBlank()) return null
+    val index = text.indexOf(query, ignoreCase = true)
+    if (index == -1) return null
+    val start = maxOf(0, index - contextChars)
+    val end = minOf(text.length, index + query.length + contextChars)
+    val prefix = if (start > 0) "..." else ""
+    val suffix = if (end < text.length) "..." else ""
+    return "$prefix${text.substring(start, end)}$suffix"
+}
 
 @Composable
 fun HomeScreen(
@@ -32,6 +45,7 @@ fun HomeScreen(
 ) {
     val documents by viewModel.filteredDocuments.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuerry.collectAsStateWithLifecycle()
+
 
     Column(
         modifier = Modifier
@@ -60,6 +74,7 @@ fun HomeScreen(
             items(documents, key = { it.id }) { document ->
                 DocumentCard(
                     document = document,
+                    searchQuery = searchQuery,
                     onClick = { onNavigateToDetail(document.id) }
                 )
             }
@@ -70,8 +85,14 @@ fun HomeScreen(
 @Composable
 private fun DocumentCard(
     document: Document,
+    searchQuery : String,
     onClick: () -> Unit
 ) {
+
+    val snippet = extractSnippet(document.extractedText, searchQuery)
+    val highlightColor = MaterialTheme.colorScheme.primary
+
+
     Card(
         modifier = Modifier
             .fillMaxWidth()

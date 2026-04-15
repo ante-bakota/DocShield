@@ -1,5 +1,6 @@
 package com.digitaldude.docshield.presentation.viewmodel
 
+import GeminiNanoDataSource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.digitaldude.docshield.domain.model.Document
@@ -12,10 +13,17 @@ import kotlinx.coroutines.launch
 
 class ScanViewModel(
     private val extractTextUseCase: ExtractTextUseCase,
-    private val addDocumentUseCase: AddDocumentUseCase
+    private val addDocumentUseCase: AddDocumentUseCase,
+    private val geminiNanoDataSource: GeminiNanoDataSource
 ) : ViewModel() {
     private val _scanState = MutableStateFlow<ScanState>(ScanState.Idle)
     val scanState : StateFlow<ScanState> = _scanState.asStateFlow()
+
+    private val _aiSuggestedState = MutableStateFlow<String?>(null)
+    val aiSuggestedState : StateFlow<String?> = _aiSuggestedState.asStateFlow()
+
+    private val _aiSuggestedTitle = MutableStateFlow<String?>(null)
+    val aiSuggestedTitle: StateFlow<String?> = _aiSuggestedTitle.asStateFlow()
 
     fun onDocumentScanned(imageUri: String){
         viewModelScope.launch {
@@ -41,6 +49,18 @@ class ScanViewModel(
                 )
             )
             resetState()
+        }
+    }
+
+    fun suggestTitleWithAi(extractedText: String) {
+        viewModelScope.launch {
+            val available = geminiNanoDataSource.isAvailable()
+            if (available) {
+                val suggestion = geminiNanoDataSource.suggestTitle(extractedText)
+                _aiSuggestedTitle.value = suggestion
+            } else {
+                _aiSuggestedTitle.value = "Gemini Nano nije dostupan"
+            }
         }
     }
 }

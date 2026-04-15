@@ -17,3 +17,4 @@ google-services.json
 *.jks
 *.keystore
 release/
+.claude/

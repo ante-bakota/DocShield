@@ -1,5 +1,6 @@
 package com.digitaldude.docshield.di
 
+import GeminiNanoDataSource
 import com.digitaldude.docshield.data.local.BiometricAuthManager
 import com.digitaldude.docshield.data.local.DatabaseKeyManager
 import com.digitaldude.docshield.data.local.DocShieldDatabase
@@ -26,7 +27,7 @@ val appModule = module {
 
     viewModel { DocumentViewModel(get(), get()) }
     viewModel{ AuthViewModel(get()) }
-    viewModel{ ScanViewModel(get(), get()) }
+    viewModel{ ScanViewModel(get(), get(), get()) }
 
 
     //Scanner
@@ -40,4 +41,6 @@ val appModule = module {
 
 
     single{ BiometricAuthManager(get()) }
+    single { GeminiNanoDataSource(androidContext()) }
+
 }

@@ -31,8 +31,10 @@ fun ScanScreen(documentScannerDataSource: DocumentScannerDataSource){
     val viewModel: ScanViewModel = koinViewModel()
     val scanState by viewModel.scanState.collectAsState()
     var documentTitle by remember { mutableStateOf("") }
+    val aiSuggestedTitle by viewModel.aiSuggestedTitle.collectAsState()
 
-  //  val scanner = remember { DocumentScannerDataSource(activity) }
+
+    //  val scanner = remember { DocumentScannerDataSource(activity) }
 
     Column(
         modifier = Modifier
@@ -72,6 +74,15 @@ fun ScanScreen(documentScannerDataSource: DocumentScannerDataSource){
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { viewModel.suggestTitleWithAi(state.extractedText) }) {
+                    Text("AI prijedlog naziva")
+                }
+                aiSuggestedTitle?.let {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("AI prijedlog: $it", style = MaterialTheme.typography.bodySmall)
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = { viewModel.saveDocument(documentTitle, state.extractedText, state.imageUri) },
