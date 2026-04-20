@@ -66,13 +66,13 @@ fun DetailScreen(
             }")
 
 
-            if(document.imageUri.isNotEmpty()){
+            if(document.imageUris.isNotEmpty()){
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(text = "Skenirani dokument:", fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(4.dp))
 
                 AsyncImage(
-                    model = document.imageUri,
+                    model = document.imageUris,
                     contentDescription = "Skenirani dokument",
                     modifier = Modifier
                         .fillMaxWidth()

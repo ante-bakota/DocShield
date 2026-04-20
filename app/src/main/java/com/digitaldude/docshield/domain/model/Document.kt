@@ -6,5 +6,5 @@ data class Document(
     val category: String,
     val dateAdded : Long = System.currentTimeMillis(),
     val extractedText: String = "",
-    val imageUri: String = "",
+    val imageUris: List<String> = emptyList(),
 )

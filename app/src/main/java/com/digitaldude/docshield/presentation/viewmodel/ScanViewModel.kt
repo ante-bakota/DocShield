@@ -28,11 +28,11 @@ class ScanViewModel(
     private val _isAiLoading = MutableStateFlow(false)
     val isAiLoading: StateFlow<Boolean> = _isAiLoading.asStateFlow()
 
-    fun onDocumentScanned(imageUri: String){
+    fun onDocumentScanned(imageUris: List<String>){
         viewModelScope.launch {
             _scanState.value = ScanState.Loading
-            val text = extractTextUseCase(imageUri)
-            _scanState.value = ScanState.Success(imageUri, text)
+            val text = extractTextUseCase(imageUris)
+            _scanState.value = ScanState.Success(imageUris, text)
         }
     }
 
@@ -55,13 +55,13 @@ class ScanViewModel(
         }
     }
 
-    fun saveDocument(title: String, extractedText: String, imageUri: String, category: String) {
+    fun saveDocument(title: String, extractedText: String, imageUris: List<String>, category: String) {
         viewModelScope.launch {
             addDocumentUseCase(
                 Document(
                     title = title.ifBlank { "Dokument bez naziva" },
                     extractedText = extractedText,
-                    imageUri = imageUri,
+                    imageUris = imageUris,
                     category = category
                 )
             )
@@ -73,6 +73,6 @@ class ScanViewModel(
 sealed class ScanState{
     object Idle: ScanState()
     object Loading : ScanState()
-    data class Success(val imageUri : String, val extractedText : String) : ScanState()
+    data class Success(val imageUris : List<String>, val extractedText : String) : ScanState()
     data class Error(val message : String) : ScanState()
 }

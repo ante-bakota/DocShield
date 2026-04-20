@@ -27,7 +27,7 @@ private fun DocumentEntity.toDomain(): Document {
         title = title,
         category = category,
         extractedText = extractedText,
-        imageUri = imageUri,
+        imageUris = imageUris,
         dateAdded = dateAdded
     )
 }
@@ -38,7 +38,7 @@ private fun Document.toEntity(): DocumentEntity {
         title = title,
         category = category,
         extractedText = extractedText,
-        imageUri = imageUri,
+        imageUris = imageUris,
         dateAdded = dateAdded
     )
 }

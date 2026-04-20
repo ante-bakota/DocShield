@@ -1,5 +1,5 @@
 package com.digitaldude.docshield.domain.repository
 
 interface ScanRepository {
-    suspend fun extractText(imageUri: String): String
+    suspend fun extractText(imageUris: List<String>): String
 }

@@ -42,9 +42,10 @@ class AiRepositoryImpl(
             Log.d(TAG, "Using Tier 1: LlmInference")
             val category = llmInferenceDataSource.categorize(extractedText)
             if (category != null) {
+                val title = ruleBased.categorize(extractedText).suggestedTitle
                 return AiSuggestion(
                     suggestedCategory = category,
-                    suggestedTitle = null // LlmInference title generation — future implementation
+                    suggestedTitle = title
                 )
             }
         }

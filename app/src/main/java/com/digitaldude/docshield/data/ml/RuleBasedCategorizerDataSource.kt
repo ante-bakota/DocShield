@@ -10,23 +10,19 @@ class RuleBasedCategorizerDataSource{
     private val categoryKeywords : Map<String, List<String>> = mapOf(
         "Racun" to listOf(
             "račun", "faktura", "iznos", "ukupno", "pdv", "plaćanje",
-            "invoice", "total", "amount", "payment", "due", "bill"
-        ),
-        "Ugovor" to listOf(
+            "invoice", "total", "amount", "payment", "due", "bill",
             "ugovor", "suglasnost", "ugovorne strane", "odredbe",
-            "contract", "agreement", "terms", "conditions"
+            "contract", "agreement", "terms", "conditions",
+            "garancija", "jamstvo", "serijski broj",
+            "warranty", "guarantee", "serial number"
         ),
-        "Medicinski" to listOf(
+        "Zdravlje" to listOf(
             "dijagnoza", "pacijent", "liječnik", "recept", "nalaz", "terapija",
             "diagnosis", "patient", "doctor", "prescription", "medical"
         ),
-        "Osobna isprava" to listOf(
+        "Osobne isprave" to listOf(
             "osobna iskaznica", "putovnica", "vozačka dozvola", "oib",
             "passport", "id card", "driving license"
-        ),
-        "Garancija" to listOf(
-            "garancija", "jamstvo", "serijski broj",
-            "warranty", "guarantee", "serial number"
         )
     )
 

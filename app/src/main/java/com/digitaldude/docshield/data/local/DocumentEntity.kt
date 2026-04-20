@@ -10,6 +10,6 @@ data class DocumentEntity(
     val title : String,
     val category : String,
     val extractedText : String,
-    val imageUri : String,
+    val imageUris : List<String>,
     val dateAdded : Long = System.currentTimeMillis()
 )

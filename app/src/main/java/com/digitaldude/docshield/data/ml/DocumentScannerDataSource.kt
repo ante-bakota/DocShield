@@ -11,7 +11,7 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 
 class DocumentScannerDataSource(private val activity: ComponentActivity) {
 
-    private var onResult: ((String?) -> Unit)? = null
+    private var onResult: ((List<String>) -> Unit)? = null
 
     private val scanner = GmsDocumentScanning.getClient(
         GmsDocumentScannerOptions.Builder()
@@ -27,14 +27,14 @@ class DocumentScannerDataSource(private val activity: ComponentActivity) {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val scanResult = GmsDocumentScanningResult.fromActivityResultIntent(result.data)
-            val uri = scanResult?.pages?.firstOrNull()?.imageUri?.toString()
-            onResult?.invoke(uri)
+            val uris = scanResult?.pages?.map { it.imageUri.toString() } ?: emptyList()
+            onResult?.invoke(uris)
         } else {
-            onResult?.invoke(null)
+            onResult?.invoke(emptyList())
         }
     }
 
-    fun startScan(onResult: (String?) -> Unit) {
+    fun startScan(onResult: (List<String?>) -> Unit) {
         this.onResult = onResult
         scanner.getStartScanIntent(activity)
             .addOnSuccessListener { intentSender ->
@@ -43,7 +43,7 @@ class DocumentScannerDataSource(private val activity: ComponentActivity) {
             .addOnFailureListener { exception ->
                 Toast.makeText(activity, "Scanner error: ${exception.message}", Toast.LENGTH_LONG).show()
 
-                onResult(null)
+                onResult?.invoke(emptyList())
             }
     }
 }
