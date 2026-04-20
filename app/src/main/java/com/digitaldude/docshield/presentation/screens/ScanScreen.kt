@@ -7,10 +7,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,16 +33,20 @@ import org.koin.androidx.compose.koinViewModel
 fun ScanScreen(documentScannerDataSource: DocumentScannerDataSource){
     val viewModel: ScanViewModel = koinViewModel()
     val scanState by viewModel.scanState.collectAsState()
-    var documentTitle by remember { mutableStateOf("") }
     val aiSuggestedTitle by viewModel.aiSuggestedTitle.collectAsState()
-
-
-    //  val scanner = remember { DocumentScannerDataSource(activity) }
+    val aiSuggestedCategory by viewModel.aiSuggestedCategory.collectAsState()
+    val isAiLoading by viewModel.isAiLoading.collectAsState()
+    var documentTitle by remember { mutableStateOf("") }
+    var documentCategory by remember { mutableStateOf("Ostalo") }
+    var categoryDropdownExpanded by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    val categories = listOf("Racun", "Zdravlje", "Osobne isprave", "Ostalo")
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -61,10 +68,6 @@ fun ScanScreen(documentScannerDataSource: DocumentScannerDataSource){
                 Text("Citam dokument")
             }
             is ScanState.Success -> {
-                Text(
-                    text = state.extractedText.ifEmpty { "Nije pronaden nijedan tekst" },
-                    style = MaterialTheme.typography.bodyMedium
-                )
                 Spacer(modifier = Modifier.height(24.dp))
                 OutlinedTextField(
                     value = documentTitle,
@@ -72,20 +75,35 @@ fun ScanScreen(documentScannerDataSource: DocumentScannerDataSource){
                     label = {Text("Naziv dokumenta")},
                     placeholder = {Text("npr. Racun - Harwey Norman")},
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                    )
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { viewModel.suggestTitleWithAi(state.extractedText) }) {
+                Button(onClick = { viewModel.suggestWithAi(state.extractedText) }) {
                     Text("AI prijedlog naziva")
                 }
                 aiSuggestedTitle?.let {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text("AI prijedlog: $it", style = MaterialTheme.typography.bodySmall)
+                    Button(onClick = { documentTitle = it }) {
+                        Text("Koristi AI prijedlog")
+                    }
                 }
 
+                aiSuggestedCategory?.let{
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("AI prijedlog: $it", style = MaterialTheme.typography.bodySmall)
+                    Button(onClick = { documentCategory = it}) {
+                        Text("Koristi ai prijedlog za kategoriju")
+                    }
+                }
                 Spacer(modifier = Modifier.height(16.dp))
+
                 Button(
-                    onClick = { viewModel.saveDocument(documentTitle, state.extractedText, state.imageUri) },
+                    onClick = { viewModel.saveDocument(documentTitle, state.extractedText, state.imageUri, documentCategory) },
                     enabled = documentTitle.isNotBlank()
                 ) {
                     Text("Spremi dokument")

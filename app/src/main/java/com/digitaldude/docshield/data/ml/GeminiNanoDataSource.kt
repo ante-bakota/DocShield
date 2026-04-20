@@ -1,3 +1,5 @@
+package com.digitaldude.docshield.data.ml
+
 import android.content.Context
 import android.util.Log
 import com.google.mlkit.genai.common.DownloadCallback
@@ -9,7 +11,6 @@ import com.google.mlkit.genai.summarization.Summarizer
 import com.google.mlkit.genai.summarization.SummarizerOptions
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.guava.await
-
 
 /**
  * Data source that accesses Gemini Nano via the ML Kit Summarization API.

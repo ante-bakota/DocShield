@@ -16,7 +16,7 @@ class DocumentScannerDataSource(private val activity: ComponentActivity) {
     private val scanner = GmsDocumentScanning.getClient(
         GmsDocumentScannerOptions.Builder()
             .setGalleryImportAllowed(false)
-            .setPageLimit(1)
+            .setPageLimit(5)
             .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
             .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
             .build()

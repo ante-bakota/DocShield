@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.devtools.ksp") version "2.0.21-1.0.28"
+    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.android)
 }
 
@@ -35,8 +35,11 @@ android {
     buildFeatures {
         compose = true
     }
-    kotlinOptions {
-        jvmTarget = "11"
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
     }
 }
 //TODO move hardcoded versions to versions.toml file
@@ -50,7 +53,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.core.ktx)
-    implementation(libs.generativeai)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -76,7 +78,7 @@ dependencies {
     implementation("androidx.camera:camera-view:$cameraxVersion")
 
     // Room
-    val roomVersion = "2.6.1"
+    val roomVersion = "2.7.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
 
@@ -97,5 +99,7 @@ dependencies {
     // Coroutines await() support for ListenableFuture (ML Kit GenAI APIs)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.8.1")
 
-
+    // LiteRT-LM — on-device LLM inference
+   // implementation(libs.litertlm.android)
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.10.0")
 }

@@ -1,10 +1,10 @@
 package com.digitaldude.docshield.presentation.viewmodel
 
-import GeminiNanoDataSource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.digitaldude.docshield.domain.model.Document
 import com.digitaldude.docshield.domain.usecase.AddDocumentUseCase
+import com.digitaldude.docshield.domain.usecase.CategorizeDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.ExtractTextUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,23 +14,25 @@ import kotlinx.coroutines.launch
 class ScanViewModel(
     private val extractTextUseCase: ExtractTextUseCase,
     private val addDocumentUseCase: AddDocumentUseCase,
-    private val geminiNanoDataSource: GeminiNanoDataSource
+    private val categorizeDocumentUseCase: CategorizeDocumentUseCase
 ) : ViewModel() {
     private val _scanState = MutableStateFlow<ScanState>(ScanState.Idle)
     val scanState : StateFlow<ScanState> = _scanState.asStateFlow()
 
-    private val _aiSuggestedState = MutableStateFlow<String?>(null)
-    val aiSuggestedState : StateFlow<String?> = _aiSuggestedState.asStateFlow()
-
     private val _aiSuggestedTitle = MutableStateFlow<String?>(null)
     val aiSuggestedTitle: StateFlow<String?> = _aiSuggestedTitle.asStateFlow()
+
+    private val _aiSuggestedCategory = MutableStateFlow<String?>(null)
+    val aiSuggestedCategory: StateFlow<String?> = _aiSuggestedCategory.asStateFlow()
+
+    private val _isAiLoading = MutableStateFlow(false)
+    val isAiLoading: StateFlow<Boolean> = _isAiLoading.asStateFlow()
 
     fun onDocumentScanned(imageUri: String){
         viewModelScope.launch {
             _scanState.value = ScanState.Loading
             val text = extractTextUseCase(imageUri)
             _scanState.value = ScanState.Success(imageUri, text)
-
         }
     }
 
@@ -38,29 +40,32 @@ class ScanViewModel(
         _scanState.value = ScanState.Idle
     }
 
-    fun saveDocument(title : String,extractedText: String, imageUri: String) {
+    /**
+     * Runs AI analysis on the scanned text — populates both title and category suggestions.
+     * Uses the full fallback chain via CategorizeDocumentUseCase, so the ViewModel
+     * has no knowledge of which AI tier is active.
+     */
+    fun suggestWithAi(extractedText: String) {
+        viewModelScope.launch {
+            _isAiLoading.value = true
+            val suggestion = categorizeDocumentUseCase(extractedText)
+            _aiSuggestedTitle.value = suggestion.suggestedTitle
+            _aiSuggestedCategory.value = suggestion.suggestedCategory
+            _isAiLoading.value = false
+        }
+    }
+
+    fun saveDocument(title: String, extractedText: String, imageUri: String, category: String) {
         viewModelScope.launch {
             addDocumentUseCase(
                 Document(
                     title = title.ifBlank { "Dokument bez naziva" },
                     extractedText = extractedText,
                     imageUri = imageUri,
-                    category = "Ostalo"
+                    category = category
                 )
             )
             resetState()
-        }
-    }
-
-    fun suggestTitleWithAi(extractedText: String) {
-        viewModelScope.launch {
-            val available = geminiNanoDataSource.isAvailable()
-            if (available) {
-                val suggestion = geminiNanoDataSource.suggestTitle(extractedText)
-                _aiSuggestedTitle.value = suggestion
-            } else {
-                _aiSuggestedTitle.value = "Gemini Nano nije dostupan"
-            }
         }
     }
 }
