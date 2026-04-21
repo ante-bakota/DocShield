@@ -1,13 +1,21 @@
 package com.digitaldude.docshield.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -66,21 +74,51 @@ fun DetailScreen(
             }")
 
 
-            if(document.imageUris.isNotEmpty()){
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(text = "Skenirani dokument:", fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(4.dp))
+         if (document.imageUris.isNotEmpty()){
+             Spacer(modifier = Modifier.height(12.dp))
+             Text(text = "Skenirani dokument :" , fontWeight = FontWeight.SemiBold)
+             Spacer(modifier = Modifier.height(4.dp))
 
-                AsyncImage(
-                    model = document.imageUris,
-                    contentDescription = "Skenirani dokument",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.FillWidth
-                )
+             val pagerState = rememberPagerState() { document.imageUris.size }
 
-            }
+             HorizontalPager(
+                 state = pagerState,
+                 modifier = Modifier.fillMaxWidth()
+             ) {
+                 page ->
+                    AsyncImage(
+                        model = document.imageUris[page],
+                        contentDescription = "Stranica ${page + 1}",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.FillWidth                    )
+             }
+
+             if (document.imageUris.size > 1) {
+                 Row(
+                     modifier = Modifier
+                         .fillMaxWidth()
+                         .padding(vertical = 8.dp),
+                     horizontalArrangement = Arrangement.Center
+                 ) {
+                     repeat(document.imageUris.size) { index ->
+                         val isSelected = pagerState.currentPage == index
+                         Box(
+                             modifier = Modifier
+                                 .padding(horizontal = 4.dp)
+                                 .size(if (isSelected) 10.dp else 7.dp)
+                                 .clip(CircleShape)
+                                 .background(
+                                     if (isSelected) MaterialTheme.colorScheme.primary
+                                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                 )
+                         )
+                     }
+                 }
+             }
+         }
+
             val cleanedOcr = cleanOcrText(document.extractedText)
             if (cleanedOcr.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
