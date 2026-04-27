@@ -3,6 +3,7 @@ package com.digitaldude.docshield.data.repository
 import com.digitaldude.docshield.data.local.DocumentDao
 import com.digitaldude.docshield.data.local.DocumentEntity
 import com.digitaldude.docshield.domain.model.Document
+import com.digitaldude.docshield.domain.model.DocumentType
 import com.digitaldude.docshield.domain.repository.DocumentRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -28,7 +29,8 @@ private fun DocumentEntity.toDomain(): Document {
         category = category,
         extractedText = extractedText,
         imageUris = imageUris,
-        dateAdded = dateAdded
+        dateAdded = dateAdded,
+        documentType = DocumentType.valueOf(documentType)
     )
 }
 
@@ -39,6 +41,7 @@ private fun Document.toEntity(): DocumentEntity {
         category = category,
         extractedText = extractedText,
         imageUris = imageUris,
-        dateAdded = dateAdded
+        dateAdded = dateAdded,
+        documentType = documentType.name
     )
 }

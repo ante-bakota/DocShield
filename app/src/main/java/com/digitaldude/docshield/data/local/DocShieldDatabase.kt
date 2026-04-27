@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import net.sqlcipher.database.SupportFactory
 
 @TypeConverters(Converters::class)
-@Database(entities = [DocumentEntity::class], version = 2, exportSchema = false)
+@Database(entities = [DocumentEntity::class], version = 3, exportSchema = false)
 abstract class DocShieldDatabase : RoomDatabase() {
     abstract fun documentDao(): DocumentDao
 

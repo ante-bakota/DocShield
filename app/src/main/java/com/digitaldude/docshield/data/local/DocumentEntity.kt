@@ -2,6 +2,7 @@ package com.digitaldude.docshield.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.digitaldude.docshield.domain.model.DocumentType
 
 @Entity(tableName = "documents")
 data class DocumentEntity(
@@ -11,5 +12,6 @@ data class DocumentEntity(
     val category : String,
     val extractedText : String,
     val imageUris : List<String>,
-    val dateAdded : Long = System.currentTimeMillis()
+    val dateAdded : Long = System.currentTimeMillis(),
+    val documentType: String = DocumentType.SCANNED.name
 )
