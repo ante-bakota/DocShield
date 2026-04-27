@@ -49,6 +49,9 @@ class MainActivity : FragmentActivity() {
                             },
                             onNavigateToScan = {
                                 navController.navigate(Screen.ScanScreen.route)
+                            },
+                            onNavigateToImportPdf = {
+                                // PDF import screen — implemented in next step
                             }
                         )
                     }
