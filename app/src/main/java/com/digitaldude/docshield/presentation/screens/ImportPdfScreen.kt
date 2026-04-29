@@ -60,8 +60,8 @@ fun ImportPdfScreen(
     onBack: () -> Unit,
     viewModel: ImportPdfViewModel = koinViewModel()
 ) {
-    // collectAsStateWithLifecycle: čita StateFlow iz ViewModela i pretvara ga u Compose State.
-    // "WithLifecycle" znači da prestaje slušati kad ekran nije vidljiv — štedi bateriju.
+    // collectAsStateWithLifecycle reads StateFlow from the ViewModel and converts it to Compose State
+    // the "WithLifecycle" part means it stops collecting when the screen is not visible — saves battery
     val state by viewModel.state.collectAsStateWithLifecycle()
     val title by viewModel.title.collectAsStateWithLifecycle()
     val category by viewModel.category.collectAsStateWithLifecycle()
@@ -69,14 +69,14 @@ fun ImportPdfScreen(
     val aiSuggestedTitle by viewModel.aiSuggestedTitle.collectAsStateWithLifecycle()
     val aiSuggestedCategory by viewModel.aiSuggestedCategory.collectAsStateWithLifecycle()
 
-    // remember + mutableStateOf: lokalno UI stanje (je li dropdown otvoren).
-    // Ovo NE ide u ViewModel jer je čisto vizualni detalj — ViewModel ne treba znati za to.
+    // remember + mutableStateOf: local UI state for whether the dropdown is open
+    // this does NOT go in the ViewModel — its a purely visual detail the VM doesnt need to know about
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
     val categories = listOf("Racun", "Zdravlje", "Osobne isprave", "Ostalo")
 
-    // rememberLauncherForActivityResult: registrira file picker launcher.
-    // Mora biti u Composableu (ne u ViewModelu) jer je vezan za Activity lifecycle.
-    // GetContent = "otvori picker i daj mi URI odabranog fajla"
+    // rememberLauncherForActivityResult registers the file picker launcher
+    // has to live in the Composable (not ViewModel) because its tied to the Activity lifecycle
+    // GetContent = open the picker and give me the URI of the selected file
     val pdfPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -104,8 +104,8 @@ fun ImportPdfScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // when na sealed classu — Kotlin garantira da su svi slučajevi pokriveni.
-            // currentState je smart cast — unutar Ready bloka, compiler zna da je Ready.
+            // when on a sealed class — Kotlin guarantees all cases are covered
+            // currentState is a smart cast — inside the Ready block the compiler knows its Ready
             when (val currentState = state) {
 
                 is ImportPdfState.Idle -> {
@@ -221,7 +221,7 @@ fun ImportPdfScreen(
                         }
                     }
 
-                    // AI sekcija — isti pattern kao u ScanScreen
+                    // AI section — same pattern as in ScanScreen
                     if (isAiLoading) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -239,8 +239,8 @@ fun ImportPdfScreen(
                         }
                     }
 
-                    // let{} blok: izvršava se samo ako vrijednost nije null.
-                    // Čišće od if (aiSuggestedTitle != null) { ... aiSuggestedTitle!! ... }
+                    // let{} block: only runs if the value is not null
+                    // cleaner than if (aiSuggestedTitle != null) { ... aiSuggestedTitle!! ... }
                     aiSuggestedTitle?.let { suggested ->
                         Text(
                             "Prijedlog naziva: $suggested",
