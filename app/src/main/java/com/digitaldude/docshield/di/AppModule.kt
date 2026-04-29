@@ -23,6 +23,7 @@ import com.digitaldude.docshield.presentation.viewmodel.AuthViewModel
 import com.digitaldude.docshield.presentation.viewmodel.DocumentViewModel
 import com.digitaldude.docshield.presentation.viewmodel.ImportPdfViewModel
 import com.digitaldude.docshield.presentation.viewmodel.ScanViewModel
+import org.koin.android.ext.koin.androidApplication
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -32,7 +33,7 @@ val appModule = module {
     viewModel { DocumentViewModel(get(), get()) }
     viewModel{ AuthViewModel(get()) }
     viewModel{ ScanViewModel(get(), get(), get()) }
-    viewModel{ ImportPdfViewModel(androidContext(), get(), get(), get()) }
+    viewModel{ ImportPdfViewModel(androidApplication(), get(), get(), get()) }
 
 
     //Scanner

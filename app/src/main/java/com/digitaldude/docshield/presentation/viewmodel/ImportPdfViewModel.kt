@@ -1,6 +1,6 @@
 package com.digitaldude.docshield.presentation.viewmodel
 
-import android.content.Context
+import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class ImportPdfViewModel(
-    private val context: Context,
+    private val application: Application,
     private val pdfTextExtractionDataSource: PdfTextExtractionDataSource,
     private val categorizeDocumentUseCase: CategorizeDocumentUseCase,
     private val addDocumentUseCase: AddDocumentUseCase
@@ -47,8 +47,8 @@ class ImportPdfViewModel(
         viewModelScope.launch {
             _state.value = ImportPdfState.Loading
             try {
-                // URI od file pickera ima privremenu dozvolu — kopiramo u internu memoriju
-                // jer nam treba stalan pristup fajlu i nakon što korisnik zatvori picker
+                // URI from the file picker has a temporary permission — copy to internal storage
+                // because we need permanent access to the file even after the picker is dismissed
                 val internalUri = copyPdfToInternalStorage(uri)
                 val filePrefix = "pdf_${System.currentTimeMillis()}"
                 val extractedText = pdfTextExtractionDataSource.extractText(internalUri)
@@ -96,8 +96,8 @@ class ImportPdfViewModel(
 
     private fun copyPdfToInternalStorage(uri: Uri): Uri {
         val fileName = "pdf_${System.currentTimeMillis()}.pdf"
-        val destFile = File(context.filesDir, fileName)
-        context.contentResolver.openInputStream(uri)?.use { input ->
+        val destFile = File(application.filesDir, fileName)
+        application.contentResolver.openInputStream(uri)?.use { input ->
             destFile.outputStream().use { output ->
                 input.copyTo(output)
             }
