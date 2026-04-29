@@ -13,6 +13,7 @@ import com.digitaldude.docshield.data.ml.DocumentScannerDataSource
 import com.digitaldude.docshield.presentation.screens.AuthScreen
 import com.digitaldude.docshield.presentation.screens.DetailScreen
 import com.digitaldude.docshield.presentation.screens.HomeScreen
+import com.digitaldude.docshield.presentation.screens.ImportPdfScreen
 import com.digitaldude.docshield.presentation.screens.ScanScreen
 import com.digitaldude.docshield.presentation.screens.Screen
 import com.digitaldude.docshield.presentation.viewmodel.AuthViewModel
@@ -51,7 +52,7 @@ class MainActivity : FragmentActivity() {
                                 navController.navigate(Screen.ScanScreen.route)
                             },
                             onNavigateToImportPdf = {
-                                // PDF import screen — implemented in next step
+                                navController.navigate(Screen.ImportPdfScreen.route)
                             }
                         )
                     }
@@ -70,6 +71,11 @@ class MainActivity : FragmentActivity() {
                         Screen.ScanScreen.route
                     ){
                         ScanScreen(documentScannerDataSource)
+                    }
+                    composable(Screen.ImportPdfScreen.route){
+                        ImportPdfScreen(
+                            onBack = { navController.popBackStack() }
+                        )
                     }
                 }
             }

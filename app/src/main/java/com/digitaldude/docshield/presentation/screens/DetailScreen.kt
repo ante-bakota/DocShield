@@ -76,7 +76,11 @@ fun DetailScreen(
 
          if (document.imageUris.isNotEmpty()){
              Spacer(modifier = Modifier.height(12.dp))
-             Text(text = "Skenirani dokument :" , fontWeight = FontWeight.SemiBold)
+             Text(
+                 text = if (document.documentType == com.digitaldude.docshield.domain.model.DocumentType.PDF)
+                     "PDF dokument:" else "Skenirani dokument:",
+                 fontWeight = FontWeight.SemiBold
+             )
              Spacer(modifier = Modifier.height(4.dp))
 
              val pagerState = rememberPagerState() { document.imageUris.size }
