@@ -17,17 +17,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,12 +41,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.digitaldude.docshield.domain.model.Document
 import com.digitaldude.docshield.presentation.viewmodel.DocumentViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -68,8 +78,6 @@ fun HomeScreen(
     val documents by viewModel.filteredDocuments.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuerry.collectAsStateWithLifecycle()
 
-    // var — must be mutable so we can toggle it on FAB tap.
-    // remember — survives recomposition; without it, state resets every recompose.
     var isFabExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -89,46 +97,53 @@ fun HomeScreen(
         }
     ) { paddingValues ->
 
-        // Box lets us stack layers: content beneath, scrim on top.
-        // Column alone can't stack — it only arranges children vertically in sequence.
         Box(modifier = Modifier.fillMaxSize()) {
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    // paddingValues = space Scaffold reserves for FAB + system bars.
-                    // Without this, the bottom of the list would hide behind the FAB.
                     .padding(paddingValues)
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = 16.dp)
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Text(
                     text = "DocShield",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { viewModel.onSearchQueryChanged(it) },
-                    placeholder = { Text("Pretraži dokumente...") },
+                    placeholder = { Text("Search documents...") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.medium
                 )
+
                 Spacer(modifier = Modifier.height(16.dp))
-                LazyColumn {
-                    items(documents, key = { it.id }) { document ->
-                        DocumentCard(
-                            document = document,
-                            searchQuery = searchQuery,
-                            onClick = { onNavigateToDetail(document.id) }
-                        )
+
+                if (documents.isEmpty() && searchQuery.isBlank()) {
+                    EmptyState()
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(documents, key = { it.id }) { document ->
+                            DocumentCard(
+                                document = document,
+                                searchQuery = searchQuery,
+                                onClick = { onNavigateToDetail(document.id) }
+                            )
+                        }
                     }
                 }
             }
 
-            // Scrim: drawn on top of content (second child in Box = higher z-order).
-            // AnimatedVisibility fades it in/out instead of popping abruptly.
-            // Tap on scrim closes the SpeedDial without navigating anywhere.
+            // scrim drawn on top of content when SpeedDial is open
+            // tap anywhere on it to close the menu without navigating
             AnimatedVisibility(
                 visible = isFabExpanded,
                 enter = fadeIn(),
@@ -146,14 +161,36 @@ fun HomeScreen(
 }
 
 @Composable
+private fun EmptyState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "No documents yet",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Tap + to scan or import a PDF",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
 private fun SpeedDialFab(
     isExpanded: Boolean,
     onToggle: () -> Unit,
     onScanClick: () -> Unit,
     onImportPdfClick: () -> Unit
 ) {
-    // animateFloatAsState smoothly interpolates the rotation value between 0° and 45°.
-    // The + icon at 45° visually becomes an ×.
+    // animateFloatAsState smoothly interpolates the rotation value between 0 and 45 degrees
+    // the + icon at 45 degrees visually becomes an x
     val rotation by animateFloatAsState(
         targetValue = if (isExpanded) 45f else 0f,
         label = "fab_rotation"
@@ -163,7 +200,6 @@ private fun SpeedDialFab(
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Mini FABs animate in when expanded, animate out when collapsed.
         AnimatedVisibility(
             visible = isExpanded,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
@@ -177,7 +213,7 @@ private fun SpeedDialFab(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Uvezi PDF", style = MaterialTheme.typography.labelLarge)
+                    Text("Import PDF", style = MaterialTheme.typography.labelLarge)
                     SmallFloatingActionButton(onClick = onImportPdfClick) {
                         Text("PDF", style = MaterialTheme.typography.labelSmall)
                     }
@@ -187,9 +223,9 @@ private fun SpeedDialFab(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Skeniraj dokument", style = MaterialTheme.typography.labelLarge)
+                    Text("Scan document", style = MaterialTheme.typography.labelLarge)
                     SmallFloatingActionButton(onClick = onScanClick) {
-                        Icon(Icons.Default.Add, contentDescription = "Skeniraj")
+                        Icon(Icons.Default.Add, contentDescription = "Scan")
                     }
                 }
             }
@@ -198,7 +234,7 @@ private fun SpeedDialFab(
         FloatingActionButton(onClick = onToggle) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = if (isExpanded) "Zatvori" else "Dodaj dokument",
+                contentDescription = if (isExpanded) "Close" else "Add document",
                 modifier = Modifier.rotate(rotation)
             )
         }
@@ -217,12 +253,78 @@ private fun DocumentCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable { onClick() }
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(text = document.title, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            Text(text = document.category, fontSize = 13.sp)
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            // thumbnail — shown only if the document has at least one image
+            if (document.imageUris.isNotEmpty()) {
+                AsyncImage(
+                    model = document.imageUris.first(),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(MaterialTheme.shapes.small),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = document.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // category badge — uses primaryContainer so it reads as a tonal chip
+                Surface(
+                    shape = MaterialTheme.shapes.extraSmall,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = document.category,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+
+                // show the matched OCR snippet when the user is searching
+                if (snippet != null) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    val annotated = buildAnnotatedString {
+                        val lower = snippet.lowercase()
+                        val queryLower = searchQuery.lowercase()
+                        var cursor = 0
+                        while (cursor < snippet.length) {
+                            val hit = lower.indexOf(queryLower, cursor)
+                            if (hit == -1) {
+                                append(snippet.substring(cursor))
+                                break
+                            }
+                            append(snippet.substring(cursor, hit))
+                            withStyle(SpanStyle(color = highlightColor, fontWeight = FontWeight.Bold)) {
+                                append(snippet.substring(hit, hit + searchQuery.length))
+                            }
+                            cursor = hit + searchQuery.length
+                        }
+                    }
+                    Text(
+                        text = annotated,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }
