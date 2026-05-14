@@ -1,40 +1,47 @@
 package com.digitaldude.docshield.presentation.screens
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
@@ -52,248 +60,535 @@ import com.digitaldude.docshield.presentation.viewmodel.ScanState
 import com.digitaldude.docshield.presentation.viewmodel.ScanViewModel
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class
+)
 @Composable
-fun ScanScreen(documentScannerDataSource: DocumentScannerDataSource){
+fun ScanScreen(
+    documentScannerDataSource: DocumentScannerDataSource,
+    onBack: () -> Unit,
+    onNavigateHome : () -> Unit
+) {
     val viewModel: ScanViewModel = koinViewModel()
+
     val scanState by viewModel.scanState.collectAsState()
     val aiSuggestedTitle by viewModel.aiSuggestedTitle.collectAsState()
     val aiSuggestedCategory by viewModel.aiSuggestedCategory.collectAsState()
     val isAiLoading by viewModel.isAiLoading.collectAsState()
+
     var documentTitle by remember { mutableStateOf("") }
     var documentCategory by remember { mutableStateOf("Ostalo") }
-    var categoryDropdownExpanded by remember { mutableStateOf(false) }
-    val categories = listOf("Racun", "Zdravlje", "Osobne isprave", "Ostalo")
     var zoomedImageUri by remember { mutableStateOf<String?>(null) }
+
+    val categories = listOf(
+        "Račun",
+        "Zdravlje",
+        "Osobne isprave",
+        "Ostalo"
+    )
 
     zoomedImageUri?.let { uri ->
         BasicAlertDialog(
-            onDismissRequest = { zoomedImageUri = null},
-            properties = DialogProperties(usePlatformDefaultWidth = false)
+            onDismissRequest = { zoomedImageUri = null },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false
+            )
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black)
-                    .clickable{ zoomedImageUri = null},
+                    .clickable { zoomedImageUri = null },
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
                     model = uri,
-                    contentDescription = "Uvecana slika",
+                    contentDescription = "Uvećana slika",
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.Fit
                 )
             }
         }
-
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        when(val state = scanState){
-            is ScanState.Idle -> {
-                Button(onClick = {
-                    documentScannerDataSource.startScan { uris ->
-                        if (uris.isNotEmpty()) viewModel.onDocumentScanned(uris as List<String>)
-                    }
-                }) {
-                    Text("Skeniraj dokument")
+    when (val state = scanState) {
+
+        ScanState.Idle -> {
+//            Box(
+//                modifier = Modifier.fillMaxSize(),
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Button(
+//                    onClick = {
+                        documentScannerDataSource.startScan { uris ->
+                            if (uris.isNotEmpty()) {
+                                viewModel.onDocumentScanned(
+                                    uris as List<String>
+                                )
+                            } else {
+                                onBack()
+                            }
+                        }
+      //              }
+//            ,
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(24.dp)
+//                        .height(56.dp)
+//                ) {
+//                    Text("Skeniraj dokument")
+//                }
+//            }
+        }
+
+        ScanState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Čitam dokument...")
                 }
             }
-            is ScanState.Loading ->{
-                CircularProgressIndicator()
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Citam dokument")
-            }
-            is ScanState.Success -> {
-                val pagerState = rememberPagerState() { state.imageUris.size }
+        }
 
-                HorizontalPager(
-                    state = pagerState,
+        is ScanState.Success -> {
+            ScanSuccessContent(
+                state = state,
+                documentTitle = documentTitle,
+                onDocumentTitleChange = {
+                    documentTitle = it
+                },
+                documentCategory = documentCategory,
+                onDocumentCategoryChange = {
+                    documentCategory = it
+                },
+                categories = categories,
+                isAiLoading = isAiLoading,
+                aiSuggestedTitle = aiSuggestedTitle,
+                aiSuggestedCategory = aiSuggestedCategory,
+                onSuggestWithAi = {
+                    viewModel.suggestWithAi(state.extractedText)
+                },
+                onApplyAiSuggestions = {
+                    aiSuggestedTitle?.let {
+                        documentTitle = it
+                    }
+                    aiSuggestedCategory?.let {
+                        documentCategory = it
+                    }
+                },
+                onSaveDocument = {
+                    viewModel.saveDocument(
+                        title = documentTitle,
+                        extractedText = state.extractedText,
+                        imageUris = state.imageUris,
+                        category = documentCategory,
+                        onSaved = onNavigateHome
+                    )
+                },
+                onScanNew = {
+                    documentTitle = ""
+                    documentCategory = "Ostalo"
+                    viewModel.resetState()
+                },
+                onImageClick = {
+                    zoomedImageUri = it.toString()
+                }
+            )
+        }
+
+        is ScanState.Error -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                ElevatedCard {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Došlo je do greške",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Button(
+                            onClick = {
+                                viewModel.resetState()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                        ) {
+                            Text("Pokušaj ponovno")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+@OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class
+)
+@Composable
+private fun ScanSuccessContent(
+    state: ScanState.Success,
+    documentTitle: String,
+    onDocumentTitleChange: (String) -> Unit,
+    documentCategory: String,
+    onDocumentCategoryChange: (String) -> Unit,
+    categories: List<String>,
+    isAiLoading: Boolean,
+    aiSuggestedTitle: String?,
+    aiSuggestedCategory: String?,
+    onSuggestWithAi: () -> Unit,
+    onApplyAiSuggestions: () -> Unit,
+    onSaveDocument: () -> Unit,
+    onScanNew: () -> Unit,
+    onImageClick: (String) -> Unit
+) {
+    var categoryExpanded by remember { mutableStateOf(false) }
+
+    val pagerState = rememberPagerState {
+        state.imageUris.size
+    }
+
+    val listState = rememberLazyListState()
+
+    val isCollapsed by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0 ||
+                    listState.firstVisibleItemScrollOffset > 60
+        }
+    }
+
+    val imageHeight by animateDpAsState(
+        targetValue = if (isCollapsed) 140.dp else 320.dp,
+        label = "imageHeight"
+    )
+
+    Scaffold(
+        bottomBar = {
+            Surface(
+                tonalElevation = 4.dp,
+                shadowElevation = 12.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onSaveDocument,
+                        enabled = documentTitle.isNotBlank() && !isAiLoading,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                    ) {
+                        Text("Spremi dokument")
+                    }
+
+                    TextButton(
+                        onClick = onScanNew,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Skeniraj novi dokument")
+                    }
+                }
+            }
+        }
+    ) { paddingValues ->
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+
+            /*
+             * IMAGE PREVIEW
+             */
+            item {
+                ElevatedCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    page ->
-                    AsyncImage(
-                        model = state.imageUris[page],
-                        contentDescription = "Stranica ${page + 1}",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable{ zoomedImageUri = state.imageUris[page]},
-                        contentScale = ContentScale.FillWidth
-                    )
-                }
-
-                if(state.imageUris.size > 1){
-                    Row(
-                        modifier = Modifier
-                            .wrapContentHeight()
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ){
-                        repeat(state.imageUris.size){ index ->
-                            val isSelected = pagerState.currentPage == index
-                            Box(
+                    Column {
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(imageHeight)
+                                .animateContentSize()
+                        ) { page ->
+                            AsyncImage(
+                                model = state.imageUris[page],
+                                contentDescription = "Stranica ${page + 1}",
                                 modifier = Modifier
-                                    .padding(horizontal = 4.dp)
-                                    .size(if(isSelected) 10.dp else 7.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if(isSelected) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurface.copy( alpha = 0.3f)
+                                    .fillMaxSize()
+                                    .clickable {
+                                        onImageClick(state.imageUris[page])
+                                    },
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        if (state.imageUris.size > 1) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                repeat(state.imageUris.size) { index ->
+                                    val selected =
+                                        pagerState.currentPage == index
+
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(horizontal = 4.dp)
+                                            .size(
+                                                if (selected) 10.dp else 8.dp
+                                            )
+                                            .clip(CircleShape)
+                                            .background(
+                                                if (selected) {
+                                                    MaterialTheme.colorScheme.primary
+                                                } else {
+                                                    MaterialTheme.colorScheme.outlineVariant
+                                                }
+                                            )
                                     )
-                            )
-                        }
-                    }
-                }
-
-                OutlinedTextField(
-                    value = documentTitle,
-                    onValueChange = {documentTitle = it},
-                    label = {Text("Naziv dokumenta")},
-                    placeholder = {Text("npr. Racun - Harwey Norman")},
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                    )
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                ExposedDropdownMenuBox(
-                    expanded = categoryDropdownExpanded,
-                    onExpandedChange = { categoryDropdownExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = documentCategory,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Kategorija") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded)
-                        },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                        )
-                    )
-                    ExposedDropdownMenu(
-                        expanded = categoryDropdownExpanded,
-                        onDismissRequest = { categoryDropdownExpanded = false }
-                    ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(category) },
-                                onClick = {
-                                    documentCategory = category
-                                    categoryDropdownExpanded = false
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+
+            /*
+             * DOCUMENT DETAILS
+             */
+            item {
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Podaci dokumenta",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+
+                        OutlinedTextField(
+                            value = documentTitle,
+                            onValueChange = onDocumentTitleChange,
+                            label = {
+                                Text("Naziv dokumenta")
+                            },
+                            placeholder = {
+                                Text("npr. Račun - Harvey Norman")
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+
+                        ExposedDropdownMenuBox(
+                            expanded = categoryExpanded,
+                            onExpandedChange = {
+                                categoryExpanded = it
+                            }
+                        ) {
+                            OutlinedTextField(
+                                value = documentCategory,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = {
+                                    Text("Kategorija")
+                                },
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults
+                                        .TrailingIcon(
+                                            expanded = categoryExpanded
+                                        )
+                                },
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth()
+                            )
+
+                            ExposedDropdownMenu(
+                                expanded = categoryExpanded,
+                                onDismissRequest = {
+                                    categoryExpanded = false
+                                }
+                            ) {
+                                categories.forEach { category ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(category)
+                                        },
+                                        onClick = {
+                                            onDocumentCategoryChange(
+                                                category
+                                            )
+                                            categoryExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        if (documentTitle.isBlank()) {
+                            Text(
+                                text = "Unesite naziv dokumenta",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme
+                                    .colorScheme
+                                    .error
                             )
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
+            }
 
-                if (isAiLoading) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                        Text("AI analizira dokument...", style = MaterialTheme.typography.bodySmall)
-                    }
-                } else {
-                    OutlinedButton(
-                        onClick = { viewModel.suggestWithAi(state.extractedText) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("AI prijedlog naziva i kategorije")
-                    }
-                }
-
-                aiSuggestedTitle?.let { title ->
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Prijedlog naziva: $title",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium
+            /*
+             * AI ASSISTANT
+             */
+            item {
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme
+                            .colorScheme
+                            .surfaceVariant
                     )
-                    OutlinedButton(
-                        onClick = { documentTitle = title },
-                        modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text("Koristi predloženi naziv")
-                    }
-                }
-
-                aiSuggestedCategory?.let { category ->
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "Prijedlog kategorije: $category",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium
-                    )
-                    OutlinedButton(
-                        onClick = { documentCategory = category },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Koristi predloženu kategoriju")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Button(
-                    onClick = {
-                        viewModel.saveDocument(
-                            documentTitle,
-                            state.extractedText,
-                            state.imageUris,
-                            documentCategory
+                        Text(
+                            text = "✨ AI prijedlog",
+                            style = MaterialTheme.typography.titleMedium
                         )
-                    },
-                    enabled = documentTitle.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Spremi dokument")
-                }
-                if (documentTitle.isBlank()) {
-                    Text(
-                        "Unesite naziv dokumenta za nastavak",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = { viewModel.resetState() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Skeniraj novi dokument")
+
+                        if (isAiLoading) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+
+                                Text(
+                                    text = "Analiziram dokument..."
+                                )
+                            }
+                        } else {
+                            FilledTonalButton(
+                                onClick = onSuggestWithAi,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp)
+                            ) {
+                                Text("Generiraj prijedlog")
+                            }
+                        }
+
+                        if (
+                            aiSuggestedTitle != null ||
+                            aiSuggestedCategory != null
+                        ) {
+                            HorizontalDivider()
+
+                            aiSuggestedTitle?.let {
+                                SuggestionRow(
+                                    label = "Naziv",
+                                    value = it
+                                )
+                            }
+
+                            aiSuggestedCategory?.let {
+                                SuggestionRow(
+                                    label = "Kategorija",
+                                    value = it
+                                )
+                            }
+
+                            Button(
+                                onClick = onApplyAiSuggestions,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp)
+                            ) {
+                                Text("Primijeni")
+                            }
+                        }
+                    }
                 }
             }
-            is ScanState.Error -> {
-                Text("Greška: ${state.message}")
-                Button(onClick = { viewModel.resetState() }) {
-                    Text("Pokušaj ponovo")
-                }
+
+            item {
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun SuggestionRow(
+    label: String,
+    value: String
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Surface(
+            shape = MaterialTheme.shapes.small,
+            color = MaterialTheme.colorScheme.secondaryContainer
+        ) {
+            Text(
+                text = value,
+                modifier = Modifier.padding(
+                    horizontal = 14.dp,
+                    vertical = 10.dp
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }

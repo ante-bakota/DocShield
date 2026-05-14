@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
@@ -152,7 +153,14 @@ fun HomeScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.4f))
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.93f)
+                                )
+                            )
+                        )
                         .clickable { isFabExpanded = false }
                 )
             }
@@ -213,7 +221,17 @@ private fun SpeedDialFab(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Import PDF", style = MaterialTheme.typography.labelLarge)
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shadowElevation = 2.dp
+                    ) {
+                        Text(
+                            text = "Import PDF",
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
                     SmallFloatingActionButton(onClick = onImportPdfClick) {
                         Text("PDF", style = MaterialTheme.typography.labelSmall)
                     }
@@ -223,7 +241,17 @@ private fun SpeedDialFab(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Scan document", style = MaterialTheme.typography.labelLarge)
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shadowElevation = 2.dp
+                    ) {
+                        Text(
+                            text = "Scan document",
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
                     SmallFloatingActionButton(onClick = onScanClick) {
                         Icon(Icons.Default.Add, contentDescription = "Scan")
                     }

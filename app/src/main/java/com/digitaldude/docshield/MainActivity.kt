@@ -70,7 +70,14 @@ class MainActivity : FragmentActivity() {
                     composable(
                         Screen.ScanScreen.route
                     ){
-                        ScanScreen(documentScannerDataSource)
+                        ScanScreen(
+                            documentScannerDataSource,
+                            onBack = {navController.popBackStack()},
+                            onNavigateHome = {
+                                navController.popBackStack()
+
+                            }
+                            )
                     }
                     composable(Screen.ImportPdfScreen.route){
                         ImportPdfScreen(

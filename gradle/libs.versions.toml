@@ -13,6 +13,7 @@ coreKtxVersion = "1.13.1"
 coil = "2.7.0"
 mlkitGenaiSummarization = "1.0.0-beta1"
 litertlm = "0.10.0"
+animation = "1.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,6 +34,7 @@ core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtxV
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 mlkit-genai-summarization = { group = "com.google.mlkit", name = "genai-summarization", version.ref = "mlkitGenaiSummarization" }
 litertlm-android = { group = "com.google.ai.edge.litertlm", name = "litertlm-android", version.ref = "litertlm" }
+androidx-compose-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "animation" }
 
 
 

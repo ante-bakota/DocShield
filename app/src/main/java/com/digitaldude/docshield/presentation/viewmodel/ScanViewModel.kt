@@ -55,7 +55,7 @@ class ScanViewModel(
         }
     }
 
-    fun saveDocument(title: String, extractedText: String, imageUris: List<String>, category: String) {
+    fun saveDocument(title: String, extractedText: String, imageUris: List<String>, category: String, onSaved: () -> Unit) {
         viewModelScope.launch {
             addDocumentUseCase(
                 Document(
@@ -66,6 +66,7 @@ class ScanViewModel(
                 )
             )
             resetState()
+            onSaved()
         }
     }
 }

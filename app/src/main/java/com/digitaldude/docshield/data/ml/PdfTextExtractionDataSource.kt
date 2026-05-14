@@ -28,6 +28,8 @@ class PdfTextExtractionDataSource(
                 page.height,
                 Bitmap.Config.ARGB_8888
             )
+            // PdfRenderer doesnt fill the background — transparent pixels become black when saved as JPEG
+            bitmap.eraseColor(android.graphics.Color.WHITE)
             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
             page.close()
 
@@ -64,6 +66,7 @@ class PdfTextExtractionDataSource(
                 page.height * scale,
                 Bitmap.Config.ARGB_8888
             )
+            bitmap.eraseColor(android.graphics.Color.WHITE)
             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
             page.close()
 

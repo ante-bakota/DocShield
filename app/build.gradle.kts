@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.core.ktx)
+    implementation(libs.androidx.compose.animation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -66,7 +67,7 @@ dependencies {
     implementation("io.insert-koin:koin-androidx-compose:3.5.3")
 
     // ML Kit Document Scanner
-    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1")
+    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
 
     // ML Kit Text Recognition
     implementation("com.google.mlkit:text-recognition:16.0.1")
