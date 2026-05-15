@@ -8,6 +8,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 
 
@@ -15,6 +18,12 @@ import kotlinx.coroutines.flow.receiveAsFlow
 class BiometricAuthManager(private val context: Context) {
     private val resultChannel = Channel<BiometricResult>(Channel.CONFLATED)
     val authResult: Flow<BiometricResult> = resultChannel.receiveAsFlow()
+
+    private val _isLocked = MutableStateFlow(false)
+    val isLocked: StateFlow<Boolean> = _isLocked.asStateFlow()
+
+    fun lock() { _isLocked.value = true }
+    fun unlock() { _isLocked.value = false }
 
     fun canAuthenticate(): Boolean {
         val biometricManager = BiometricManager.from(context)
@@ -41,6 +50,7 @@ class BiometricAuthManager(private val context: Context) {
             object : BiometricPrompt.AuthenticationCallback() {
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    unlock()
                     resultChannel.trySend(BiometricResult.Success)
                 }
 

@@ -6,12 +6,15 @@ import com.digitaldude.docshield.domain.model.Document
 import com.digitaldude.docshield.domain.usecase.AddDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.CategorizeDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.ExtractTextUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ScanViewModel(
+@HiltViewModel
+class ScanViewModel @Inject constructor(
     private val extractTextUseCase: ExtractTextUseCase,
     private val addDocumentUseCase: AddDocumentUseCase,
     private val categorizeDocumentUseCase: CategorizeDocumentUseCase
@@ -65,7 +68,6 @@ class ScanViewModel(
                     category = category
                 )
             )
-            resetState()
             onSaved()
         }
     }

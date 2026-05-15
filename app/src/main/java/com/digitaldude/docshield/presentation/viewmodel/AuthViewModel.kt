@@ -4,10 +4,12 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.digitaldude.docshield.data.local.BiometricAuthManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed class AuthState{
     object Idle : AuthState()
@@ -15,8 +17,8 @@ sealed class AuthState{
     object Authenticated : AuthState()
     data class Error(val message : String) : AuthState()
 }
-
-class AuthViewModel(private val biometricAuthManager: BiometricAuthManager) : ViewModel() {
+@HiltViewModel
+class AuthViewModel @Inject constructor(private val biometricAuthManager: BiometricAuthManager) : ViewModel() {
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState : StateFlow<AuthState> = _authState.asStateFlow()
 

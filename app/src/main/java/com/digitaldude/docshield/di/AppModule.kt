@@ -1,10 +1,10 @@
 package com.digitaldude.docshield.di
 
-import com.digitaldude.docshield.data.ml.GeminiNanoDataSource
+import android.content.Context
 import com.digitaldude.docshield.data.local.BiometricAuthManager
 import com.digitaldude.docshield.data.local.DatabaseKeyManager
 import com.digitaldude.docshield.data.local.DocShieldDatabase
-import com.digitaldude.docshield.data.ml.DocumentScannerDataSource
+import com.digitaldude.docshield.data.ml.GeminiNanoDataSource
 import com.digitaldude.docshield.data.ml.LlmInferenceDataSource
 import com.digitaldude.docshield.data.ml.PdfTextExtractionDataSource
 import com.digitaldude.docshield.data.ml.RuleBasedCategorizerDataSource
@@ -19,49 +19,99 @@ import com.digitaldude.docshield.domain.usecase.AddDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.CategorizeDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.ExtractTextUseCase
 import com.digitaldude.docshield.domain.usecase.GetDocumentsUseCase
-import com.digitaldude.docshield.presentation.viewmodel.AuthViewModel
-import com.digitaldude.docshield.presentation.viewmodel.DocumentViewModel
-import com.digitaldude.docshield.presentation.viewmodel.ImportPdfViewModel
-import com.digitaldude.docshield.presentation.viewmodel.ScanViewModel
-import org.koin.android.ext.koin.androidApplication
-import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.viewmodel.dsl.viewModel
-import org.koin.dsl.module
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
-val appModule = module {
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
 
-    viewModel { DocumentViewModel(get(), get()) }
-    viewModel{ AuthViewModel(get()) }
-    viewModel{ ScanViewModel(get(), get(), get()) }
-    viewModel{ ImportPdfViewModel(androidApplication(), get(), get(), get()) }
+    @Provides
+    @Singleton
+    fun provideDatabaseKeyManager(
+        @ApplicationContext context: Context
+    ): DatabaseKeyManager = DatabaseKeyManager(context)
 
+    @Provides
+    @Singleton
+    fun provideDatabase(
+        @ApplicationContext context: Context,
+        keyManager: DatabaseKeyManager
+    ): DocShieldDatabase = DocShieldDatabase.create(context, keyManager.getOrCreatePassphrase())
 
-    //Scanner
-    single{ DocumentScannerDataSource(get()) }
-    single{ TextRecognitionDataSource(get()) }
-    single{ PdfTextExtractionDataSource(get(), get()) }
+    @Provides
+    @Singleton
+    fun provideBiometricAuthManager(
+        @ApplicationContext context: Context
+    ): BiometricAuthManager = BiometricAuthManager(context)
 
+    @Provides
+    @Singleton
+    fun provideTextRecognitionDataSource(
+        @ApplicationContext context: Context
+    ): TextRecognitionDataSource = TextRecognitionDataSource(context)
 
-    single{ DatabaseKeyManager(get()) }
-    single{ DocShieldDatabase.create(androidContext(), get<DatabaseKeyManager>().getOrCreatePassphrase()) }
+    @Provides
+    @Singleton
+    fun providePdfTextExtractionDataSource(
+        @ApplicationContext context: Context,
+        textRecognition: TextRecognitionDataSource
+    ): PdfTextExtractionDataSource = PdfTextExtractionDataSource(context, textRecognition)
 
-    //AUth
-    single{ BiometricAuthManager(get()) }
+    @Provides
+    @Singleton
+    fun provideLlmInferenceDataSource(
+        @ApplicationContext context: Context
+    ): LlmInferenceDataSource = LlmInferenceDataSource(context)
 
-    // Repositories
-    single<DocumentRepository> { DocumentRepositoryImpl(get<DocShieldDatabase>().documentDao()) }
-    single<ScanRepository> { ScanRepositoryImpl(get()) }
-    single<AiRepository> { AiRepositoryImpl(get(), get(), get()) }
+    @Provides
+    @Singleton
+    fun provideGeminiNanoDataSource(
+        @ApplicationContext context: Context
+    ): GeminiNanoDataSource = GeminiNanoDataSource(context)
 
-    // AI data sources
-    single { LlmInferenceDataSource(androidContext()) }
-    single { GeminiNanoDataSource(androidContext()) }
-    single { RuleBasedCategorizerDataSource() }
+    @Provides
+    @Singleton
+    fun provideRuleBasedCategorizerDataSource(): RuleBasedCategorizerDataSource =
+        RuleBasedCategorizerDataSource()
 
-    // Use cases
-    factory { GetDocumentsUseCase(get()) }
-    factory { AddDocumentUseCase(get()) }
-    factory { ExtractTextUseCase(get()) }
-    factory { CategorizeDocumentUseCase(get()) }
+    @Provides
+    @Singleton
+    fun provideDocumentRepository(
+        database: DocShieldDatabase
+    ): DocumentRepository = DocumentRepositoryImpl(database.documentDao())
 
+    @Provides
+    @Singleton
+    fun provideScanRepository(
+        textRecognition: TextRecognitionDataSource
+    ): ScanRepository = ScanRepositoryImpl(textRecognition)
+
+    @Provides
+    @Singleton
+    fun provideAiRepository(
+        llm: LlmInferenceDataSource,
+        gemini: GeminiNanoDataSource,
+        ruleBased: RuleBasedCategorizerDataSource
+    ): AiRepository = AiRepositoryImpl(llm, gemini, ruleBased)
+
+    @Provides
+    fun provideGetDocumentsUseCase(repository: DocumentRepository): GetDocumentsUseCase =
+        GetDocumentsUseCase(repository)
+
+    @Provides
+    fun provideAddDocumentUseCase(repository: DocumentRepository): AddDocumentUseCase =
+        AddDocumentUseCase(repository)
+
+    @Provides
+    fun provideExtractTextUseCase(repository: ScanRepository): ExtractTextUseCase =
+        ExtractTextUseCase(repository)
+
+    @Provides
+    fun provideCategorizeDocumentUseCase(repository: AiRepository): CategorizeDocumentUseCase =
+        CategorizeDocumentUseCase(repository)
 }

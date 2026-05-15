@@ -54,11 +54,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.digitaldude.docshield.data.ml.DocumentScannerDataSource
 import com.digitaldude.docshield.presentation.viewmodel.ScanState
 import com.digitaldude.docshield.presentation.viewmodel.ScanViewModel
-import org.koin.androidx.compose.koinViewModel
 
 @OptIn(
     ExperimentalFoundationApi::class,
@@ -70,7 +70,7 @@ fun ScanScreen(
     onBack: () -> Unit,
     onNavigateHome : () -> Unit
 ) {
-    val viewModel: ScanViewModel = koinViewModel()
+    val viewModel: ScanViewModel = hiltViewModel()
 
     val scanState by viewModel.scanState.collectAsState()
     val aiSuggestedTitle by viewModel.aiSuggestedTitle.collectAsState()

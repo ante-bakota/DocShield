@@ -48,17 +48,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.digitaldude.docshield.presentation.viewmodel.ImportPdfState
 import com.digitaldude.docshield.presentation.viewmodel.ImportPdfViewModel
-import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImportPdfScreen(
     onBack: () -> Unit,
-    viewModel: ImportPdfViewModel = koinViewModel()
+    viewModel: ImportPdfViewModel = hiltViewModel()
 ) {
     // collectAsStateWithLifecycle reads StateFlow from the ViewModel and converts it to Compose State
     // the "WithLifecycle" part means it stops collecting when the screen is not visible — saves battery

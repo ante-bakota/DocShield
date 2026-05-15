@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.digitaldude.docshield.domain.model.Document
 import com.digitaldude.docshield.domain.usecase.AddDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.GetDocumentsUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -12,8 +13,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class DocumentViewModel(
+@HiltViewModel
+class DocumentViewModel @Inject constructor(
     private val getDocumentsUseCase: GetDocumentsUseCase,
     private val addDocumentUseCase: AddDocumentUseCase
 ) : ViewModel() {

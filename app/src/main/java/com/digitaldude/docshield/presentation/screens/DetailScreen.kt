@@ -42,19 +42,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.digitaldude.docshield.domain.model.DocumentType
 import com.digitaldude.docshield.presentation.util.cleanOcrText
 import com.digitaldude.docshield.presentation.viewmodel.DocumentViewModel
-import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
     documentId: Long,
     onBack: () -> Unit,
-    viewModel: DocumentViewModel = koinViewModel()
+    viewModel: DocumentViewModel = hiltViewModel()
 ) {
     val documents by viewModel.documents.collectAsStateWithLifecycle()
     val document = documents.find { it.id == documentId }

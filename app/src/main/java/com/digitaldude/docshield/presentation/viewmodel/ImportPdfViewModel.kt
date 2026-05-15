@@ -1,6 +1,7 @@
 package com.digitaldude.docshield.presentation.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,14 +10,18 @@ import com.digitaldude.docshield.domain.model.Document
 import com.digitaldude.docshield.domain.model.DocumentType
 import com.digitaldude.docshield.domain.usecase.AddDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.CategorizeDocumentUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
+import javax.inject.Inject
 
-class ImportPdfViewModel(
-    private val application: Application,
+@HiltViewModel
+class ImportPdfViewModel @Inject constructor(
+    @ApplicationContext private val application: Context,
     private val pdfTextExtractionDataSource: PdfTextExtractionDataSource,
     private val categorizeDocumentUseCase: CategorizeDocumentUseCase,
     private val addDocumentUseCase: AddDocumentUseCase
