@@ -2,6 +2,7 @@ package com.digitaldude.docshield.data.local
 
 import BiometricResult
 import android.content.Context
+import android.util.Log
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -22,8 +23,16 @@ class BiometricAuthManager(private val context: Context) {
     private val _isLocked = MutableStateFlow(false)
     val isLocked: StateFlow<Boolean> = _isLocked.asStateFlow()
 
-    fun lock() { _isLocked.value = true }
-    fun unlock() { _isLocked.value = false }
+    fun lock() {
+        Log.d("DocShield_Lock", "lock() called — isLocked will become true")
+        Log.d("DocShield_Lock", "lock() stack: ${Thread.currentThread().stackTrace.drop(2).take(6).joinToString(" <- ") { "${it.className.substringAfterLast('.')}.${it.methodName}" }}")
+        _isLocked.value = true
+    }
+
+    fun unlock() {
+        Log.d("DocShield_Lock", "unlock() called — isLocked will become false")
+        _isLocked.value = false
+    }
 
     fun canAuthenticate(): Boolean {
         val biometricManager = BiometricManager.from(context)

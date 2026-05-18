@@ -58,6 +58,7 @@ import com.digitaldude.docshield.presentation.viewmodel.ImportPdfViewModel
 @Composable
 fun ImportPdfScreen(
     onBack: () -> Unit,
+    onBeforeExternalLaunch: () -> Unit,
     viewModel: ImportPdfViewModel = hiltViewModel()
 ) {
     // collectAsStateWithLifecycle reads StateFlow from the ViewModel and converts it to Compose State
@@ -116,7 +117,10 @@ fun ImportPdfScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
-                        onClick = { pdfPickerLauncher.launch("application/pdf") },
+                        onClick = {
+                            onBeforeExternalLaunch()
+                            pdfPickerLauncher.launch("application/pdf")
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Odaberi PDF")

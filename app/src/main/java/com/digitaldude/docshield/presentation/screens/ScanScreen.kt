@@ -56,22 +56,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.digitaldude.docshield.data.ml.DocumentScannerDataSource
 import com.digitaldude.docshield.presentation.viewmodel.ScanState
 import com.digitaldude.docshield.presentation.viewmodel.ScanViewModel
 
-@OptIn(
-    ExperimentalFoundationApi::class,
-    ExperimentalMaterial3Api::class
-)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScanScreen(
-    documentScannerDataSource: DocumentScannerDataSource,
     onBack: () -> Unit,
-    onNavigateHome : () -> Unit
+    onNavigateHome: () -> Unit
 ) {
     val viewModel: ScanViewModel = hiltViewModel()
-
     val scanState by viewModel.scanState.collectAsState()
     val aiSuggestedTitle by viewModel.aiSuggestedTitle.collectAsState()
     val aiSuggestedCategory by viewModel.aiSuggestedCategory.collectAsState()
@@ -81,19 +75,12 @@ fun ScanScreen(
     var documentCategory by remember { mutableStateOf("Ostalo") }
     var zoomedImageUri by remember { mutableStateOf<String?>(null) }
 
-    val categories = listOf(
-        "Račun",
-        "Zdravlje",
-        "Osobne isprave",
-        "Ostalo"
-    )
+    val categories = listOf("Račun", "Zdravlje", "Osobne isprave", "Ostalo")
 
     zoomedImageUri?.let { uri ->
         BasicAlertDialog(
             onDismissRequest = { zoomedImageUri = null },
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false
-            )
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             Box(
                 modifier = Modifier
@@ -114,42 +101,12 @@ fun ScanScreen(
 
     when (val state = scanState) {
 
-        ScanState.Idle -> {
-//            Box(
-//                modifier = Modifier.fillMaxSize(),
-//                contentAlignment = Alignment.Center
-//            ) {
-//                Button(
-//                    onClick = {
-                        documentScannerDataSource.startScan { uris ->
-                            if (uris.isNotEmpty()) {
-                                viewModel.onDocumentScanned(
-                                    uris as List<String>
-                                )
-                            } else {
-                                onBack()
-                            }
-                        }
-      //              }
-//            ,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(24.dp)
-//                        .height(56.dp)
-//                ) {
-//                    Text("Skeniraj dokument")
-//                }
-//            }
-        }
-
         ScanState.Loading -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator()
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Čitam dokument...")
@@ -161,27 +118,17 @@ fun ScanScreen(
             ScanSuccessContent(
                 state = state,
                 documentTitle = documentTitle,
-                onDocumentTitleChange = {
-                    documentTitle = it
-                },
+                onDocumentTitleChange = { documentTitle = it },
                 documentCategory = documentCategory,
-                onDocumentCategoryChange = {
-                    documentCategory = it
-                },
+                onDocumentCategoryChange = { documentCategory = it },
                 categories = categories,
                 isAiLoading = isAiLoading,
                 aiSuggestedTitle = aiSuggestedTitle,
                 aiSuggestedCategory = aiSuggestedCategory,
-                onSuggestWithAi = {
-                    viewModel.suggestWithAi(state.extractedText)
-                },
+                onSuggestWithAi = { viewModel.suggestWithAi(state.extractedText) },
                 onApplyAiSuggestions = {
-                    aiSuggestedTitle?.let {
-                        documentTitle = it
-                    }
-                    aiSuggestedCategory?.let {
-                        documentCategory = it
-                    }
+                    aiSuggestedTitle?.let { documentTitle = it }
+                    aiSuggestedCategory?.let { documentCategory = it }
                 },
                 onSaveDocument = {
                     viewModel.saveDocument(
@@ -192,14 +139,8 @@ fun ScanScreen(
                         onSaved = onNavigateHome
                     )
                 },
-                onScanNew = {
-                    documentTitle = ""
-                    documentCategory = "Ostalo"
-                    viewModel.resetState()
-                },
-                onImageClick = {
-                    zoomedImageUri = it.toString()
-                }
+                onScanNew = onBack,
+                onImageClick = { zoomedImageUri = it.toString() }
             )
         }
 
@@ -220,16 +161,12 @@ fun ScanScreen(
                             text = "Došlo je do greške",
                             style = MaterialTheme.typography.titleLarge
                         )
-
                         Text(
                             text = state.message,
                             style = MaterialTheme.typography.bodyMedium
                         )
-
                         Button(
-                            onClick = {
-                                viewModel.resetState()
-                            },
+                            onClick = { viewModel.retryOcr() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
@@ -242,10 +179,8 @@ fun ScanScreen(
         }
     }
 }
-@OptIn(
-    ExperimentalFoundationApi::class,
-    ExperimentalMaterial3Api::class
-)
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun ScanSuccessContent(
     state: ScanState.Success,
@@ -264,11 +199,7 @@ private fun ScanSuccessContent(
     onImageClick: (String) -> Unit
 ) {
     var categoryExpanded by remember { mutableStateOf(false) }
-
-    val pagerState = rememberPagerState {
-        state.imageUris.size
-    }
-
+    val pagerState = rememberPagerState { state.imageUris.size }
     val listState = rememberLazyListState()
 
     val isCollapsed by remember {
@@ -330,9 +261,7 @@ private fun ScanSuccessContent(
              * IMAGE PREVIEW
              */
             item {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column {
                         HorizontalPager(
                             state = pagerState,
@@ -346,9 +275,7 @@ private fun ScanSuccessContent(
                                 contentDescription = "Stranica ${page + 1}",
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .clickable {
-                                        onImageClick(state.imageUris[page])
-                                    },
+                                    .clickable { onImageClick(state.imageUris[page]) },
                                 contentScale = ContentScale.Crop
                             )
                         }
@@ -361,22 +288,15 @@ private fun ScanSuccessContent(
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 repeat(state.imageUris.size) { index ->
-                                    val selected =
-                                        pagerState.currentPage == index
-
+                                    val selected = pagerState.currentPage == index
                                     Box(
                                         modifier = Modifier
                                             .padding(horizontal = 4.dp)
-                                            .size(
-                                                if (selected) 10.dp else 8.dp
-                                            )
+                                            .size(if (selected) 10.dp else 8.dp)
                                             .clip(CircleShape)
                                             .background(
-                                                if (selected) {
-                                                    MaterialTheme.colorScheme.primary
-                                                } else {
-                                                    MaterialTheme.colorScheme.outlineVariant
-                                                }
+                                                if (selected) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.outlineVariant
                                             )
                                     )
                                 }
@@ -390,9 +310,7 @@ private fun ScanSuccessContent(
              * DOCUMENT DETAILS
              */
             item {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier.padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -405,34 +323,23 @@ private fun ScanSuccessContent(
                         OutlinedTextField(
                             value = documentTitle,
                             onValueChange = onDocumentTitleChange,
-                            label = {
-                                Text("Naziv dokumenta")
-                            },
-                            placeholder = {
-                                Text("npr. Račun - Harvey Norman")
-                            },
+                            label = { Text("Naziv dokumenta") },
+                            placeholder = { Text("npr. Račun - Harvey Norman") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
 
                         ExposedDropdownMenuBox(
                             expanded = categoryExpanded,
-                            onExpandedChange = {
-                                categoryExpanded = it
-                            }
+                            onExpandedChange = { categoryExpanded = it }
                         ) {
                             OutlinedTextField(
                                 value = documentCategory,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = {
-                                    Text("Kategorija")
-                                },
+                                label = { Text("Kategorija") },
                                 trailingIcon = {
-                                    ExposedDropdownMenuDefaults
-                                        .TrailingIcon(
-                                            expanded = categoryExpanded
-                                        )
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
                                 },
                                 modifier = Modifier
                                     .menuAnchor()
@@ -441,19 +348,13 @@ private fun ScanSuccessContent(
 
                             ExposedDropdownMenu(
                                 expanded = categoryExpanded,
-                                onDismissRequest = {
-                                    categoryExpanded = false
-                                }
+                                onDismissRequest = { categoryExpanded = false }
                             ) {
                                 categories.forEach { category ->
                                     DropdownMenuItem(
-                                        text = {
-                                            Text(category)
-                                        },
+                                        text = { Text(category) },
                                         onClick = {
-                                            onDocumentCategoryChange(
-                                                category
-                                            )
+                                            onDocumentCategoryChange(category)
                                             categoryExpanded = false
                                         }
                                     )
@@ -465,9 +366,7 @@ private fun ScanSuccessContent(
                             Text(
                                 text = "Unesite naziv dokumenta",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme
-                                    .colorScheme
-                                    .error
+                                color = MaterialTheme.colorScheme.error
                             )
                         }
                     }
@@ -481,9 +380,7 @@ private fun ScanSuccessContent(
                 ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme
-                            .colorScheme
-                            .surfaceVariant
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 ) {
                     Column(
@@ -504,10 +401,7 @@ private fun ScanSuccessContent(
                                     modifier = Modifier.size(20.dp),
                                     strokeWidth = 2.dp
                                 )
-
-                                Text(
-                                    text = "Analiziram dokument..."
-                                )
+                                Text("Analiziram dokument...")
                             }
                         } else {
                             FilledTonalButton(
@@ -520,24 +414,15 @@ private fun ScanSuccessContent(
                             }
                         }
 
-                        if (
-                            aiSuggestedTitle != null ||
-                            aiSuggestedCategory != null
-                        ) {
+                        if (aiSuggestedTitle != null || aiSuggestedCategory != null) {
                             HorizontalDivider()
 
                             aiSuggestedTitle?.let {
-                                SuggestionRow(
-                                    label = "Naziv",
-                                    value = it
-                                )
+                                SuggestionRow(label = "Naziv", value = it)
                             }
 
                             aiSuggestedCategory?.let {
-                                SuggestionRow(
-                                    label = "Kategorija",
-                                    value = it
-                                )
+                                SuggestionRow(label = "Kategorija", value = it)
                             }
 
                             Button(
@@ -553,39 +438,26 @@ private fun ScanSuccessContent(
                 }
             }
 
-            item {
-                Spacer(
-                    modifier = Modifier.height(8.dp)
-                )
-            }
+            item { Spacer(modifier = Modifier.height(8.dp)) }
         }
     }
 }
 
 @Composable
-private fun SuggestionRow(
-    label: String,
-    value: String
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
+private fun SuggestionRow(label: String, value: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
         Surface(
             shape = MaterialTheme.shapes.small,
             color = MaterialTheme.colorScheme.secondaryContainer
         ) {
             Text(
                 text = value,
-                modifier = Modifier.padding(
-                    horizontal = 14.dp,
-                    vertical = 10.dp
-                ),
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )

@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.digitaldude.docshield.data.ml.DocumentScannerDataSource
 import com.digitaldude.docshield.domain.model.Document
 import com.digitaldude.docshield.presentation.viewmodel.DocumentViewModel
 
@@ -70,8 +71,10 @@ private fun extractSnippet(text: String, query: String, contextChars: Int = 60):
 
 @Composable
 fun HomeScreen(
+    documentScannerDataSource: DocumentScannerDataSource,
+    onBeforeExternalLaunch: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
-    onNavigateToScan: () -> Unit,
+    onNavigateToScan: (List<String>) -> Unit,
     onNavigateToImportPdf: () -> Unit,
     viewModel: DocumentViewModel = hiltViewModel()
 ) {
@@ -87,7 +90,13 @@ fun HomeScreen(
                 onToggle = { isFabExpanded = !isFabExpanded },
                 onScanClick = {
                     isFabExpanded = false
-                    onNavigateToScan()
+                    documentScannerDataSource.startScan(
+                        onBeforeLaunch = onBeforeExternalLaunch
+                    ) { uris ->
+                        if (uris.isNotEmpty()) {
+                            onNavigateToScan(uris.filterNotNull())
+                        }
+                    }
                 },
                 onImportPdfClick = {
                     isFabExpanded = false

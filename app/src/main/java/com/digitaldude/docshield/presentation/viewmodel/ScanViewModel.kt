@@ -2,6 +2,7 @@ package com.digitaldude.docshield.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.digitaldude.docshield.data.local.ScanSessionHolder
 import com.digitaldude.docshield.domain.model.Document
 import com.digitaldude.docshield.domain.usecase.AddDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.CategorizeDocumentUseCase
@@ -15,12 +16,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ScanViewModel @Inject constructor(
+    private val scanSessionHolder: ScanSessionHolder,
     private val extractTextUseCase: ExtractTextUseCase,
     private val addDocumentUseCase: AddDocumentUseCase,
     private val categorizeDocumentUseCase: CategorizeDocumentUseCase
 ) : ViewModel() {
-    private val _scanState = MutableStateFlow<ScanState>(ScanState.Idle)
-    val scanState : StateFlow<ScanState> = _scanState.asStateFlow()
+
+    private val _scanState = MutableStateFlow<ScanState>(ScanState.Loading)
+    val scanState: StateFlow<ScanState> = _scanState.asStateFlow()
 
     private val _aiSuggestedTitle = MutableStateFlow<String?>(null)
     val aiSuggestedTitle: StateFlow<String?> = _aiSuggestedTitle.asStateFlow()
@@ -31,23 +34,27 @@ class ScanViewModel @Inject constructor(
     private val _isAiLoading = MutableStateFlow(false)
     val isAiLoading: StateFlow<Boolean> = _isAiLoading.asStateFlow()
 
-    fun onDocumentScanned(imageUris: List<String>){
+    private val imageUris: List<String> = scanSessionHolder.consume()
+
+    init {
+        processImages()
+    }
+
+    private fun processImages() {
+        if (imageUris.isEmpty()) return
         viewModelScope.launch {
             _scanState.value = ScanState.Loading
-            val text = extractTextUseCase(imageUris)
-            _scanState.value = ScanState.Success(imageUris, text)
+            try {
+                val text = extractTextUseCase(imageUris)
+                _scanState.value = ScanState.Success(imageUris, text)
+            } catch (e: Exception) {
+                _scanState.value = ScanState.Error(e.message ?: "Greška pri obradi dokumenta")
+            }
         }
     }
 
-    fun resetState(){
-        _scanState.value = ScanState.Idle
-    }
+    fun retryOcr() = processImages()
 
-    /**
-     * Runs AI analysis on the scanned text — populates both title and category suggestions.
-     * Uses the full fallback chain via CategorizeDocumentUseCase, so the ViewModel
-     * has no knowledge of which AI tier is active.
-     */
     fun suggestWithAi(extractedText: String) {
         viewModelScope.launch {
             _isAiLoading.value = true
@@ -58,7 +65,13 @@ class ScanViewModel @Inject constructor(
         }
     }
 
-    fun saveDocument(title: String, extractedText: String, imageUris: List<String>, category: String, onSaved: () -> Unit) {
+    fun saveDocument(
+        title: String,
+        extractedText: String,
+        imageUris: List<String>,
+        category: String,
+        onSaved: () -> Unit
+    ) {
         viewModelScope.launch {
             addDocumentUseCase(
                 Document(
@@ -73,9 +86,8 @@ class ScanViewModel @Inject constructor(
     }
 }
 
-sealed class ScanState{
-    object Idle: ScanState()
+sealed class ScanState {
     object Loading : ScanState()
-    data class Success(val imageUris : List<String>, val extractedText : String) : ScanState()
-    data class Error(val message : String) : ScanState()
+    data class Success(val imageUris: List<String>, val extractedText: String) : ScanState()
+    data class Error(val message: String) : ScanState()
 }

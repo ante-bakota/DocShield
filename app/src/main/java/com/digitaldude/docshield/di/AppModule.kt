@@ -2,6 +2,7 @@ package com.digitaldude.docshield.di
 
 import android.content.Context
 import com.digitaldude.docshield.data.local.BiometricAuthManager
+import com.digitaldude.docshield.data.local.ScanSessionHolder
 import com.digitaldude.docshield.data.local.DatabaseKeyManager
 import com.digitaldude.docshield.data.local.DocShieldDatabase
 import com.digitaldude.docshield.data.ml.GeminiNanoDataSource
@@ -42,6 +43,10 @@ object AppModule {
         @ApplicationContext context: Context,
         keyManager: DatabaseKeyManager
     ): DocShieldDatabase = DocShieldDatabase.create(context, keyManager.getOrCreatePassphrase())
+
+    @Provides
+    @Singleton
+    fun provideScanSessionHolder(): ScanSessionHolder = ScanSessionHolder()
 
     @Provides
     @Singleton

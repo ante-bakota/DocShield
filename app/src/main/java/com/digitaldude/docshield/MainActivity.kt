@@ -1,6 +1,7 @@
 package com.digitaldude.docshield
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
@@ -14,6 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.digitaldude.docshield.data.local.BiometricAuthManager
+import com.digitaldude.docshield.data.local.ScanSessionHolder
 import com.digitaldude.docshield.data.ml.DocumentScannerDataSource
 import com.digitaldude.docshield.presentation.screens.AuthScreen
 import com.digitaldude.docshield.presentation.screens.DetailScreen
@@ -29,11 +31,50 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
     private lateinit var documentScannerDataSource: DocumentScannerDataSource
+
     @Inject
     lateinit var biometricAuthManager: BiometricAuthManager
 
+    @Inject
+    lateinit var scanSessionHolder: ScanSessionHolder
+
+    override fun onResume() {
+        super.onResume()
+        suppressNextLock = false  // always reset here — covers scanner cancel, failure, and return
+        Log.d("DocShield_Lock", "MainActivity.onResume — suppressNextLock reset")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d("DocShield_Lock", "MainActivity.onPause")
+    }
+
     override fun onStop() {
         super.onStop()
+        Log.d("DocShield_Lock", "MainActivity.onStop")
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d("DocShield_Lock", "MainActivity.onStart")
+    }
+
+    // Set to true before launching any external Activity (scanner, file picker).
+    // Prevents onUserLeaveHint from locking the app during those transitions.
+    private var suppressNextLock = false
+
+    fun suppressNextLock() {
+        suppressNextLock = true
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (suppressNextLock) {
+            // flag stays true until onResume — handles multiple firings from GMS scanner
+            Log.d("DocShield_Lock", "MainActivity.onUserLeaveHint — suppressed")
+            return
+        }
+        Log.d("DocShield_Lock", "MainActivity.onUserLeaveHint — locking")
         biometricAuthManager.lock()
     }
 
@@ -59,19 +100,22 @@ class MainActivity : FragmentActivity() {
                     navController = navController,
                     startDestination = Screen.AuthScreen.route
                 ) {
-                    composable(Screen.AuthScreen.route){
-                        val authViewModel :  AuthViewModel = hiltViewModel()
+                    composable(Screen.AuthScreen.route) {
+                        val authViewModel: AuthViewModel = hiltViewModel()
                         AuthScreen(
-                            navController =  navController,
+                            navController = navController,
                             viewModel = authViewModel
                         )
                     }
                     composable(Screen.Home.route) {
                         HomeScreen(
+                            documentScannerDataSource = documentScannerDataSource,
+                            onBeforeExternalLaunch = { suppressNextLock() },
                             onNavigateToDetail = { documentId ->
                                 navController.navigate(Screen.Detail.createRoute(documentId))
                             },
-                            onNavigateToScan = {
+                            onNavigateToScan = { uris ->
+                                scanSessionHolder.set(uris)
                                 navController.navigate(Screen.ScanScreen.route)
                             },
                             onNavigateToImportPdf = {
@@ -85,26 +129,19 @@ class MainActivity : FragmentActivity() {
                     ) { backStackEntry ->
                         DetailScreen(
                             documentId = backStackEntry.arguments?.getLong("documentId") ?: 0L,
-                            onBack = {
-                                navController.popBackStack()
-                            }
+                            onBack = { navController.popBackStack() }
                         )
                     }
-                    composable(
-                        Screen.ScanScreen.route
-                    ){
+                    composable(Screen.ScanScreen.route) {
                         ScanScreen(
-                            documentScannerDataSource,
-                            onBack = {navController.popBackStack()},
-                            onNavigateHome = {
-                                navController.popBackStack()
-
-                            }
-                            )
+                            onBack = { navController.popBackStack() },
+                            onNavigateHome = { navController.popBackStack() }
+                        )
                     }
-                    composable(Screen.ImportPdfScreen.route){
+                    composable(Screen.ImportPdfScreen.route) {
                         ImportPdfScreen(
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            onBeforeExternalLaunch = { suppressNextLock() }
                         )
                     }
                 }

@@ -34,16 +34,16 @@ class DocumentScannerDataSource(private val activity: ComponentActivity) {
         }
     }
 
-    fun startScan(onResult: (List<String?>) -> Unit) {
+    fun startScan(onBeforeLaunch: () -> Unit = {}, onResult: (List<String?>) -> Unit) {
         this.onResult = onResult
         scanner.getStartScanIntent(activity)
             .addOnSuccessListener { intentSender ->
+                onBeforeLaunch()  // set flag right before the external Activity launches
                 launcher.launch(IntentSenderRequest.Builder(intentSender).build())
             }
             .addOnFailureListener { exception ->
                 Toast.makeText(activity, "Scanner error: ${exception.message}", Toast.LENGTH_LONG).show()
-
-                onResult?.invoke(emptyList())
+                onResult(emptyList())
             }
     }
 }
