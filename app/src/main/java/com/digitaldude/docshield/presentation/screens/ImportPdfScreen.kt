@@ -17,25 +17,23 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,15 +42,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.digitaldude.docshield.presentation.components.CategoryChip
+import com.digitaldude.docshield.presentation.components.FullScreenLoader
+import com.digitaldude.docshield.presentation.components.InlineLoader
+import com.digitaldude.docshield.presentation.components.SecureButton
+import com.digitaldude.docshield.presentation.components.VaultBackground
+import com.digitaldude.docshield.presentation.components.VaultCard
 import com.digitaldude.docshield.presentation.viewmodel.ImportPdfState
 import com.digitaldude.docshield.presentation.viewmodel.ImportPdfViewModel
+import com.digitaldude.docshield.ui.theme.DocAmber
+import com.digitaldude.docshield.ui.theme.DocLavender
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,266 +66,352 @@ fun ImportPdfScreen(
     onBeforeExternalLaunch: () -> Unit,
     viewModel: ImportPdfViewModel = hiltViewModel()
 ) {
-    // collectAsStateWithLifecycle reads StateFlow from the ViewModel and converts it to Compose State
-    // the "WithLifecycle" part means it stops collecting when the screen is not visible — saves battery
     val state by viewModel.state.collectAsStateWithLifecycle()
     val title by viewModel.title.collectAsStateWithLifecycle()
     val category by viewModel.category.collectAsStateWithLifecycle()
     val isAiLoading by viewModel.isAiLoading.collectAsStateWithLifecycle()
     val aiSuggestedTitle by viewModel.aiSuggestedTitle.collectAsStateWithLifecycle()
     val aiSuggestedCategory by viewModel.aiSuggestedCategory.collectAsStateWithLifecycle()
-
-    // remember + mutableStateOf: local UI state for whether the dropdown is open
-    // this does NOT go in the ViewModel — its a purely visual detail the VM doesnt need to know about
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
     val categories = listOf("Racun", "Zdravlje", "Osobne isprave", "Ostalo")
 
-    // rememberLauncherForActivityResult registers the file picker launcher
-    // has to live in the Composable (not ViewModel) because its tied to the Activity lifecycle
-    // GetContent = open the picker and give me the URI of the selected file
     val pdfPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let { viewModel.processPdf(it) }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Uvezi PDF") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Natrag")
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // when on a sealed class — Kotlin guarantees all cases are covered
-            // currentState is a smart cast — inside the Ready block the compiler knows its Ready
-            when (val currentState = state) {
+    when (val currentState = state) {
+        ImportPdfState.Loading -> FullScreenLoader(message = "Analyzing PDF...")
 
-                is ImportPdfState.Idle -> {
-                    Spacer(modifier = Modifier.height(48.dp))
-                    Text(
-                        "Odaberi PDF dokument s uređaja",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = {
-                            onBeforeExternalLaunch()
-                            pdfPickerLauncher.launch("application/pdf")
-                        },
-                        modifier = Modifier.fillMaxWidth()
+        else -> {
+            Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { paddingValues ->
+                VaultBackground {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                            .padding(horizontal = 18.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text("Odaberi PDF")
-                    }
-                }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ImportHeader(onBack = onBack)
 
-                is ImportPdfState.Loading -> {
-                    Spacer(modifier = Modifier.height(64.dp))
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Analiziram PDF...", style = MaterialTheme.typography.bodyMedium)
-                }
-
-                is ImportPdfState.Ready -> {
-                    val pagerState = rememberPagerState { currentState.pageImageUris.size }
-
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.fillMaxWidth()
-                    ) { page ->
-                        AsyncImage(
-                            model = currentState.pageImageUris[page],
-                            contentDescription = "Stranica ${page + 1}",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.FillWidth
-                        )
-                    }
-
-                    if (currentState.pageImageUris.size > 1) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            repeat(currentState.pageImageUris.size) { index ->
-                                val isSelected = pagerState.currentPage == index
-                                Box(
-                                    modifier = Modifier
-                                        .padding(horizontal = 4.dp)
-                                        .size(if (isSelected) 10.dp else 7.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (isSelected) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        when (currentState) {
+                            ImportPdfState.Idle -> {
+                                VaultCard(modifier = Modifier.fillMaxWidth()) {
+                                    Column(
+                                        modifier = Modifier.padding(24.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(18.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(88.dp)
+                                                .clip(MaterialTheme.shapes.extraLarge)
+                                                .background(DocAmber.copy(alpha = 0.20f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "PDF",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = DocAmber,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        Text(
+                                            text = "Choose a PDF from your device",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
-                                )
-                            }
-                        }
-                    }
-
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { viewModel.onTitleChanged(it) },
-                        label = { Text("Naziv dokumenta") },
-                        placeholder = { Text("npr. Račun - HT") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                        )
-                    )
-
-                    ExposedDropdownMenuBox(
-                        expanded = categoryDropdownExpanded,
-                        onExpandedChange = { categoryDropdownExpanded = it }
-                    ) {
-                        OutlinedTextField(
-                            value = category,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Kategorija") },
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded)
-                            },
-                            modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                            )
-                        )
-                        ExposedDropdownMenu(
-                            expanded = categoryDropdownExpanded,
-                            onDismissRequest = { categoryDropdownExpanded = false }
-                        ) {
-                            categories.forEach { cat ->
-                                DropdownMenuItem(
-                                    text = { Text(cat) },
-                                    onClick = {
-                                        viewModel.onCategoryChanged(cat)
-                                        categoryDropdownExpanded = false
+                                        Text(
+                                            text = "DocShield will extract text and prepare a secure document preview.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        SecureButton(
+                                            onClick = {
+                                                onBeforeExternalLaunch()
+                                                pdfPickerLauncher.launch("application/pdf")
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Choose PDF")
+                                        }
                                     }
-                                )
+                                }
                             }
+
+                            is ImportPdfState.Ready -> {
+                                val pagerState = rememberPagerState { currentState.pageImageUris.size }
+
+                                VaultCard(modifier = Modifier.fillMaxWidth()) {
+                                    Column {
+                                        HorizontalPager(
+                                            state = pagerState,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) { page ->
+                                            AsyncImage(
+                                                model = currentState.pageImageUris[page],
+                                                contentDescription = "Page ${page + 1}",
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(MaterialTheme.shapes.large),
+                                                contentScale = ContentScale.FillWidth
+                                            )
+                                        }
+
+                                        if (currentState.pageImageUris.size > 1) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 12.dp),
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
+                                                repeat(currentState.pageImageUris.size) { index ->
+                                                    val selected = pagerState.currentPage == index
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .padding(horizontal = 4.dp)
+                                                            .size(if (selected) 10.dp else 7.dp)
+                                                            .clip(CircleShape)
+                                                            .background(
+                                                                if (selected) DocLavender
+                                                                else MaterialTheme.colorScheme.outlineVariant
+                                                            )
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                VaultCard(modifier = Modifier.fillMaxWidth()) {
+                                    Column(
+                                        modifier = Modifier.padding(18.dp),
+                                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                                    ) {
+                                        Text(
+                                            text = "Document details",
+                                            style = MaterialTheme.typography.titleLarge
+                                        )
+                                        OutlinedTextField(
+                                            value = title,
+                                            onValueChange = viewModel::onTitleChanged,
+                                            label = { Text("Document name") },
+                                            placeholder = { Text("e.g. Receipt - HT") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            singleLine = true,
+                                            shape = MaterialTheme.shapes.medium
+                                        )
+
+                                        ExposedDropdownMenuBox(
+                                            expanded = categoryDropdownExpanded,
+                                            onExpandedChange = { categoryDropdownExpanded = it }
+                                        ) {
+                                            OutlinedTextField(
+                                                value = category,
+                                                onValueChange = {},
+                                                readOnly = true,
+                                                label = { Text("Category") },
+                                                trailingIcon = {
+                                                    ExposedDropdownMenuDefaults.TrailingIcon(
+                                                        expanded = categoryDropdownExpanded
+                                                    )
+                                                },
+                                                modifier = Modifier
+                                                    .menuAnchor()
+                                                    .fillMaxWidth(),
+                                                shape = MaterialTheme.shapes.medium
+                                            )
+                                            ExposedDropdownMenu(
+                                                expanded = categoryDropdownExpanded,
+                                                onDismissRequest = { categoryDropdownExpanded = false }
+                                            ) {
+                                                categories.forEach { cat ->
+                                                    DropdownMenuItem(
+                                                        text = { Text(cat) },
+                                                        onClick = {
+                                                            viewModel.onCategoryChanged(cat)
+                                                            categoryDropdownExpanded = false
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                VaultCard(modifier = Modifier.fillMaxWidth()) {
+                                    Column(
+                                        modifier = Modifier.padding(18.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "AI suggestion",
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                            CategoryChip(text = "Local assist")
+                                        }
+
+                                        if (isAiLoading) {
+                                            InlineLoader(message = "AI is analyzing...")
+                                        } else {
+                                            FilledTonalButton(
+                                                onClick = { viewModel.suggestWithAi(currentState.extractedText) },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(50.dp),
+                                                shape = MaterialTheme.shapes.medium
+                                            ) {
+                                                Text("Suggest name and category")
+                                            }
+                                        }
+
+                                        if (aiSuggestedTitle != null || aiSuggestedCategory != null) {
+                                            HorizontalDivider()
+                                            aiSuggestedTitle?.let { suggested ->
+                                                SuggestionRow(label = "Name", value = suggested)
+                                                OutlinedButton(
+                                                    onClick = { viewModel.onTitleChanged(suggested) },
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    shape = MaterialTheme.shapes.medium
+                                                ) {
+                                                    Text("Use suggested name")
+                                                }
+                                            }
+                                            aiSuggestedCategory?.let { suggested ->
+                                                SuggestionRow(label = "Category", value = suggested)
+                                                OutlinedButton(
+                                                    onClick = { viewModel.onCategoryChanged(suggested) },
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    shape = MaterialTheme.shapes.medium
+                                                ) {
+                                                    Text("Use suggested category")
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                SecureButton(
+                                    onClick = { viewModel.saveDocument(onBack) },
+                                    enabled = title.isNotBlank(),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Save document")
+                                }
+
+                                if (title.isBlank()) {
+                                    Text(
+                                        text = "Enter a document name to continue.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                OutlinedButton(
+                                    onClick = { viewModel.reset() },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = MaterialTheme.shapes.medium
+                                ) {
+                                    Text("Choose another PDF")
+                                }
+                            }
+
+                            is ImportPdfState.Error -> {
+                                VaultCard(modifier = Modifier.fillMaxWidth()) {
+                                    Column(
+                                        modifier = Modifier.padding(24.dp),
+                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        Text(
+                                            text = "PDF import failed",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = currentState.message,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        SecureButton(
+                                            onClick = { pdfPickerLauncher.launch("application/pdf") },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Try again")
+                                        }
+                                        OutlinedButton(
+                                            onClick = { viewModel.reset() },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = MaterialTheme.shapes.medium
+                                        ) {
+                                            Text("Cancel")
+                                        }
+                                    }
+                                }
+                            }
+
+                            ImportPdfState.Loading -> Unit
                         }
-                    }
 
-                    // AI section — same pattern as in ScanScreen
-                    if (isAiLoading) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                            Text("AI analizira...", style = MaterialTheme.typography.bodySmall)
-                        }
-                    } else {
-                        OutlinedButton(
-                            onClick = { viewModel.suggestWithAi(currentState.extractedText) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("AI prijedlog naziva i kategorije")
-                        }
-                    }
-
-                    // let{} block: only runs if the value is not null
-                    // cleaner than if (aiSuggestedTitle != null) { ... aiSuggestedTitle!! ... }
-                    aiSuggestedTitle?.let { suggested ->
-                        Text(
-                            "Prijedlog naziva: $suggested",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium
-                        )
-                        OutlinedButton(
-                            onClick = { viewModel.onTitleChanged(suggested) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Koristi predloženi naziv")
-                        }
-                    }
-
-                    aiSuggestedCategory?.let { suggested ->
-                        Text(
-                            "Prijedlog kategorije: $suggested",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium
-                        )
-                        OutlinedButton(
-                            onClick = { viewModel.onCategoryChanged(suggested) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Koristi predloženu kategoriju")
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Button(
-                        onClick = { viewModel.saveDocument(onBack) },
-                        enabled = title.isNotBlank(),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Spremi dokument")
-                    }
-
-                    if (title.isBlank()) {
-                        Text(
-                            "Unesite naziv dokumenta za nastavak",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                    }
-
-                    OutlinedButton(
-                        onClick = { viewModel.reset() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Odaberi drugi PDF")
-                    }
-                }
-
-                is ImportPdfState.Error -> {
-                    Spacer(modifier = Modifier.height(48.dp))
-                    Text(
-                        "Greška: ${currentState.message}",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { pdfPickerLauncher.launch("application/pdf") },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Pokušaj ponovo")
-                    }
-                    OutlinedButton(
-                        onClick = { viewModel.reset() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Odustani")
+                        Spacer(modifier = Modifier.height(18.dp))
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ImportHeader(onBack: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        }
+        Column {
+            Text(
+                text = "Import",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "PDF document",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun SuggestionRow(label: String, value: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.medium)
+                .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.34f))
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }

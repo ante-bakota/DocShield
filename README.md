@@ -1,4 +1,4 @@
-# DocShield
+you # DocShield
 
 Privacy-first, offline document vault for Android. Zero cloud, zero tracking.
 
