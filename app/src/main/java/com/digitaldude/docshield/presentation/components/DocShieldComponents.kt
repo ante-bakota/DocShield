@@ -6,13 +6,13 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -27,7 +27,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,6 +40,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -49,9 +49,9 @@ import androidx.compose.ui.unit.dp
 import com.digitaldude.docshield.ui.theme.DocAmber
 import com.digitaldude.docshield.ui.theme.DocAmberDark
 import com.digitaldude.docshield.ui.theme.DocLavender
+import com.digitaldude.docshield.ui.theme.DocLavenderDark
 import com.digitaldude.docshield.ui.theme.DocTeal
-import com.google.android.gms.common.util.CollectionUtils.listOf
-import com.google.common.base.Strings.repeat
+import com.digitaldude.docshield.ui.theme.DocTealDark
 
 @Composable
 fun VaultBackground(
@@ -59,7 +59,7 @@ fun VaultBackground(
     content: @Composable () -> Unit
 ) {
     val dark = isSystemInDarkTheme()
-    val colors = if (dark) {
+    val bgColors = if (dark) {
         listOf(
             MaterialTheme.colorScheme.background,
             MaterialTheme.colorScheme.surface,
@@ -73,34 +73,40 @@ fun VaultBackground(
         )
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(colors))
-    ) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val density = LocalDensity.current
+        val widthPx = with(density) { maxWidth.toPx() }
+        val heightPx = with(density) { maxHeight.toPx() }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(DocTeal.copy(alpha = 0.16f), Color.Transparent),
-                        center = Offset(900f, 70f),
-                        radius = 760f
+                .background(Brush.verticalGradient(bgColors))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(DocTeal.copy(alpha = 0.16f), Color.Transparent),
+                            center = Offset(widthPx, heightPx * 0.08f),
+                            radius = widthPx * 0.85f
+                        )
                     )
-                )
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(DocLavender.copy(alpha = 0.18f), Color.Transparent),
-                        center = Offset(0f, 920f),
-                        radius = 820f
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(DocLavender.copy(alpha = 0.18f), Color.Transparent),
+                            center = Offset(0f, heightPx * 0.75f),
+                            radius = widthPx * 0.95f
+                        )
                     )
-                )
-        )
-        content()
+            )
+            content()
+        }
     }
 }
 
@@ -110,14 +116,11 @@ fun VaultCard(
     content: @Composable () -> Unit
 ) {
     ElevatedCard(
-        modifier = modifier.border(
-            BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.42f)),
-            MaterialTheme.shapes.large
-        ),
+        modifier = modifier,
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+            containerColor = Color.Transparent
         ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
         shape = MaterialTheme.shapes.large
     ) {
         content()
@@ -128,20 +131,39 @@ fun VaultCard(
 fun CategoryChip(
     text: String,
     modifier: Modifier = Modifier,
-    accent: Color = DocAmber
+    accent: Color? = null
 ) {
-    Surface(
+    val resolvedAccent = accent ?: when (text.trim().lowercase()) {
+        "racun" -> DocAmber
+        "zdravlje" -> DocTeal
+        "osobne isprave" -> DocLavender
+        else -> DocAmber
+    }
+    val textColor = if (isSystemInDarkTheme()) {
+        resolvedAccent
+    } else {
+        when (resolvedAccent) {
+            DocTeal -> DocTealDark
+            DocLavender -> DocLavenderDark
+            else -> DocAmberDark
+        }
+    }
+
+    Row(
         modifier = modifier,
-        shape = MaterialTheme.shapes.small,
-        color = accent.copy(alpha = 0.18f),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.30f))
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .background(resolvedAccent, CircleShape)
+        )
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
-            color = if (isSystemInDarkTheme()) accent else DocAmberDark
+            color = textColor
         )
     }
 }

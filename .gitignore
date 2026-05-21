@@ -18,3 +18,10 @@ google-services.json
 *.keystore
 release/
 .claude/
+
+# Agent context & docs
+CLAUDE.md
+AGENTS.md
+docs/
+**/CONTEXT.md
+design_mockup.html

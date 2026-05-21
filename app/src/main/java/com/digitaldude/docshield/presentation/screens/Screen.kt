@@ -11,4 +11,7 @@ sealed class Screen(val route: String) {
     object AuthScreen : Screen("authScreen")
 
     object ImportPdfScreen : Screen("importPdf")
+    object Category : Screen("category/{category}") {
+        fun createRoute(category: String) = "category/$category"
+    }
 }

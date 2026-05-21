@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -110,14 +111,14 @@ fun ImportPdfScreen(
                                             modifier = Modifier
                                                 .size(88.dp)
                                                 .clip(MaterialTheme.shapes.extraLarge)
-                                                .background(DocAmber.copy(alpha = 0.20f)),
+                                                .background(DocAmber.copy(alpha = 0.15f)),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text(
-                                                text = "PDF",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = DocAmber,
-                                                fontWeight = FontWeight.Bold
+                                            Icon(
+                                                imageVector = Icons.Outlined.UploadFile,
+                                                contentDescription = null,
+                                                tint = DocAmber,
+                                                modifier = Modifier.size(52.dp)
                                             )
                                         }
                                         Text(

@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -46,9 +48,36 @@ class DocumentViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
-    fun onSearchQueryChanged(query : String){
+    val recentDocuments: StateFlow<List<Document>> = documents
+        .map { docs -> docs.sortedByDescending { it.dateAdded }.take(6) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val categoryCounts: StateFlow<Map<String, Int>> = documents
+        .map { docs -> docs.groupBy { it.category }.mapValues { it.value.size } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    private val _searchHistory = MutableStateFlow<List<String>>(emptyList())
+    val searchHistory: StateFlow<List<String>> = _searchHistory.asStateFlow()
+
+    fun onSearchQueryChanged(query: String) {
         _searchQuerry.value = query
     }
+
+    fun addToSearchHistory(query: String) {
+        if (query.isBlank()) return
+        _searchHistory.update { history ->
+            (listOf(query) + history.filter { it != query }).take(10)
+        }
+    }
+
+    fun removeFromSearchHistory(query: String) {
+        _searchHistory.update { it.filter { item -> item != query } }
+    }
+
+    fun clearSearchHistory() {
+        _searchHistory.value = emptyList()
+    }
+
     fun dodajDokument(title: String, category: String) {
         viewModelScope.launch {
             addDocumentUseCase(Document(title = title, category = category))

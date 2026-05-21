@@ -18,6 +18,7 @@ import com.digitaldude.docshield.data.local.BiometricAuthManager
 import com.digitaldude.docshield.data.local.ScanSessionHolder
 import com.digitaldude.docshield.data.ml.DocumentScannerDataSource
 import com.digitaldude.docshield.presentation.screens.AuthScreen
+import com.digitaldude.docshield.presentation.screens.CategoryScreen
 import com.digitaldude.docshield.presentation.screens.DetailScreen
 import com.digitaldude.docshield.presentation.screens.HomeScreen
 import com.digitaldude.docshield.presentation.screens.ImportPdfScreen
@@ -120,6 +121,21 @@ class MainActivity : FragmentActivity() {
                             },
                             onNavigateToImportPdf = {
                                 navController.navigate(Screen.ImportPdfScreen.route)
+                            },
+                            onNavigateToCategory = { category ->
+                                navController.navigate(Screen.Category.createRoute(category))
+                            }
+                        )
+                    }
+                    composable(
+                        Screen.Category.route,
+                        arguments = listOf(navArgument("category") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        CategoryScreen(
+                            category = backStackEntry.arguments?.getString("category") ?: "",
+                            onBack = { navController.popBackStack() },
+                            onNavigateToDetail = { documentId ->
+                                navController.navigate(Screen.Detail.createRoute(documentId))
                             }
                         )
                     }
