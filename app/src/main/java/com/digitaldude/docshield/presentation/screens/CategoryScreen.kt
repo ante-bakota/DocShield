@@ -16,13 +16,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +45,18 @@ import com.digitaldude.docshield.presentation.components.VaultBackground
 import com.digitaldude.docshield.presentation.viewmodel.DocumentViewModel
 import com.digitaldude.docshield.ui.theme.DocLavender
 
+// ─── Sort options ─────────────────────────────────────────────────────────────
+
+private enum class SortOption(val label: String) {
+    DATE_DESC("Newest first"),
+    DATE_ASC("Oldest first"),
+    NAME_ASC("Name A → Z"),
+    NAME_DESC("Name Z → A")
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryScreen(
     category: String,
@@ -50,9 +67,12 @@ fun CategoryScreen(
     val allDocuments by viewModel.documents.collectAsStateWithLifecycle()
 
     var localSearch by remember { mutableStateOf("") }
+    var sortOption by remember { mutableStateOf(SortOption.DATE_DESC) }
+    var showSortSheet by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    val sheetState = rememberModalBottomSheetState()
 
-    val categoryDocs = remember(allDocuments, category, localSearch) {
+    val categoryDocs = remember(allDocuments, category, localSearch, sortOption) {
         allDocuments
             .filter { it.category.equals(category, ignoreCase = true) }
             .let { docs ->
@@ -60,6 +80,14 @@ fun CategoryScreen(
                 else docs.filter {
                     it.title.contains(localSearch, ignoreCase = true) ||
                         it.extractedText.contains(localSearch, ignoreCase = true)
+                }
+            }
+            .let { docs ->
+                when (sortOption) {
+                    SortOption.DATE_DESC -> docs.sortedByDescending { it.dateAdded }
+                    SortOption.DATE_ASC  -> docs.sortedBy { it.dateAdded }
+                    SortOption.NAME_ASC  -> docs.sortedBy { it.title.lowercase() }
+                    SortOption.NAME_DESC -> docs.sortedByDescending { it.title.lowercase() }
                 }
             }
     }
@@ -82,7 +110,7 @@ fun CategoryScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // Top bar: back + category title
+                // Top bar: back + title
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -105,22 +133,19 @@ fun CategoryScreen(
                     )
                 }
 
-                // Search bar — scoped to this category
+                // Search bar scoped to category
                 PersistentSearchBar(
                     value = localSearch,
                     onValueChange = { localSearch = it },
                     onFocusChanged = {},
-                    onClear = {
-                        localSearch = ""
-                        focusManager.clearFocus()
-                    },
+                    onClear = { localSearch = ""; focusManager.clearFocus() },
                     onSearch = {},
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Count + filter button on same row
+                // Count + active sort label + filter button
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -128,23 +153,36 @@ fun CategoryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "${categoryDocs.size} document${if (categoryDocs.size != 1) "s" else ""}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column {
+                        Text(
+                            text = "${categoryDocs.size} document${if (categoryDocs.size != 1) "s" else ""}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (sortOption != SortOption.DATE_DESC) {
+                            Text(
+                                text = sortOption.label,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = DocLavender,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    // Filter button — tinted when non-default sort active
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = DocLavender,
+                        color = if (sortOption != SortOption.DATE_DESC)
+                            DocLavender else DocLavender.copy(alpha = 0.75f),
                         shadowElevation = 3.dp,
                         modifier = Modifier
                             .size(34.dp)
-                            .clickable { /* TODO: filter sheet */ }
+                            .clickable { showSortSheet = true }
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Outlined.FilterList,
-                                contentDescription = "Filter",
+                                contentDescription = "Sort",
                                 tint = Color.White,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -182,6 +220,73 @@ fun CategoryScreen(
                         }
                         item { Spacer(modifier = Modifier.height(16.dp)) }
                     }
+                }
+            }
+        }
+
+        // Sort bottom sheet
+        if (showSortSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showSortSheet = false },
+                sheetState = sheetState
+            ) {
+                SortSheet(
+                    current = sortOption,
+                    onSelect = {
+                        sortOption = it
+                        showSortSheet = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+// ─── Sort sheet content ───────────────────────────────────────────────────────
+
+@Composable
+private fun SortSheet(
+    current: SortOption,
+    onSelect: (SortOption) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 32.dp)
+    ) {
+        Text(
+            text = "Sort by",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+        )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+        SortOption.entries.forEach { option ->
+            val selected = option == current
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSelect(option) }
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = option.label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (selected) DocLavender
+                            else MaterialTheme.colorScheme.onSurface
+                )
+                if (selected) {
+                    Icon(
+                        imageVector = Icons.Outlined.Check,
+                        contentDescription = null,
+                        tint = DocLavender,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }

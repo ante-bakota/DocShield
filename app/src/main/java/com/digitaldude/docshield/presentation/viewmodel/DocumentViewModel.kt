@@ -2,8 +2,12 @@ package com.digitaldude.docshield.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.digitaldude.docshield.domain.model.Category
 import com.digitaldude.docshield.domain.model.Document
+import com.digitaldude.docshield.domain.usecase.AddCategoryUseCase
 import com.digitaldude.docshield.domain.usecase.AddDocumentUseCase
+import com.digitaldude.docshield.domain.usecase.DeleteCategoryUseCase
+import com.digitaldude.docshield.domain.usecase.GetCategoriesUseCase
 import com.digitaldude.docshield.domain.usecase.GetDocumentsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +24,10 @@ import javax.inject.Inject
 @HiltViewModel
 class DocumentViewModel @Inject constructor(
     private val getDocumentsUseCase: GetDocumentsUseCase,
-    private val addDocumentUseCase: AddDocumentUseCase
+    private val addDocumentUseCase: AddDocumentUseCase,
+    private val getCategoriesUseCase: GetCategoriesUseCase,
+    private val addCategoryUseCase: AddCategoryUseCase,
+    private val deleteCategoryUseCase: DeleteCategoryUseCase
 ) : ViewModel() {
 
     val documents: StateFlow<List<Document>> = getDocumentsUseCase()
@@ -58,6 +65,25 @@ class DocumentViewModel @Inject constructor(
 
     private val _searchHistory = MutableStateFlow<List<String>>(emptyList())
     val searchHistory: StateFlow<List<String>> = _searchHistory.asStateFlow()
+
+    // Custom categories — persisted in Room, survives app restarts
+    val customCategories: StateFlow<List<String>> = getCategoriesUseCase()
+        .map { categories -> categories.map { it.name } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun addCustomCategory(name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isBlank()) return
+        viewModelScope.launch {
+            addCategoryUseCase(Category(name = trimmed))
+        }
+    }
+
+    fun removeCustomCategory(name: String) {
+        viewModelScope.launch {
+            deleteCategoryUseCase(name)
+        }
+    }
 
     fun onSearchQueryChanged(query: String) {
         _searchQuerry.value = query

@@ -44,14 +44,17 @@ import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.UploadFile
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -171,11 +174,13 @@ fun HomeScreen(
     val searchResults by viewModel.filteredDocuments.collectAsStateWithLifecycle()
     val recentDocuments by viewModel.recentDocuments.collectAsStateWithLifecycle()
     val categoryCounts by viewModel.categoryCounts.collectAsStateWithLifecycle()
+    val customCategories by viewModel.customCategories.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuerry.collectAsStateWithLifecycle()
     val searchHistory by viewModel.searchHistory.collectAsStateWithLifecycle()
 
     var isFabExpanded by remember { mutableStateOf(false) }
     var isSearchActive by remember { mutableStateOf(false) }
+    var showNewFolderDialog by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
     BackHandler(enabled = isSearchActive || searchQuery.isNotBlank()) {
@@ -246,9 +251,11 @@ fun HomeScreen(
 
                         else -> HomeContent(
                             categoryCounts = categoryCounts,
+                            customCategories = customCategories,
                             recentDocuments = recentDocuments,
                             onCategoryClick = onNavigateToCategory,
-                            onDocumentClick = { onNavigateToDetail(it.id) }
+                            onDocumentClick = { onNavigateToDetail(it.id) },
+                            onNewFolderClick = { showNewFolderDialog = true }
                         )
                     }
                 }
@@ -310,6 +317,16 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    if (showNewFolderDialog) {
+        NewFolderDialog(
+            onConfirm = { name ->
+                viewModel.addCustomCategory(name)
+                showNewFolderDialog = false
+            },
+            onDismiss = { showNewFolderDialog = false }
+        )
     }
 }
 
@@ -503,9 +520,11 @@ fun PersistentSearchBar(
 @Composable
 private fun HomeContent(
     categoryCounts: Map<String, Int>,
+    customCategories: List<String>,
     recentDocuments: List<Document>,
     onCategoryClick: (String) -> Unit,
-    onDocumentClick: (Document) -> Unit
+    onDocumentClick: (Document) -> Unit,
+    onNewFolderClick: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -525,7 +544,7 @@ private fun HomeContent(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable { /* TODO: create folder dialog */ }
+                        .clickable(onClick = onNewFolderClick)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Icon(
@@ -546,6 +565,7 @@ private fun HomeContent(
         item {
             FolderGrid(
                 categoryCounts = categoryCounts,
+                customCategories = customCategories,
                 onCategoryClick = onCategoryClick,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
@@ -586,14 +606,25 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
 @Composable
 private fun FolderGrid(
     categoryCounts: Map<String, Int>,
+    customCategories: List<String>,
     onCategoryClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val allCategories = categories + customCategories.map { name ->
+        CategoryDef(
+            key = name,
+            displayName = name,
+            icon = Icons.Outlined.FolderOpen,
+            bgColor = DocGrayBg,
+            iconColor = DocGray
+        )
+    }
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        categories.chunked(2).forEach { row ->
+        allCategories.chunked(2).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 row.forEach { cat ->
                     FolderCard(
@@ -620,7 +651,6 @@ private fun FolderCard(
     VaultCard(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(def.bgColor.copy(alpha = 0.45f))
             .border(
                 BorderStroke(1.5.dp, def.iconColor.copy(alpha = 0.35f)),
                 RoundedCornerShape(16.dp)
@@ -1003,6 +1033,58 @@ private fun DocumentThumb(document: Document) {
             )
         }
     }
+}
+
+// ─── New folder dialog ────────────────────────────────────────────────────────
+
+@Composable
+private fun NewFolderDialog(
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    val isValid = name.trim().isNotBlank()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.CreateNewFolder,
+                contentDescription = null,
+                tint = DocLavender,
+                modifier = Modifier.size(28.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "New Folder",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                placeholder = { Text("Folder name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (isValid) onConfirm(name.trim()) },
+                enabled = isValid
+            ) {
+                Text("Create", color = if (isValid) DocLavender else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 // ─── FAB speed dial option ────────────────────────────────────────────────────

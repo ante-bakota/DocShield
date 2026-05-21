@@ -11,14 +11,19 @@ import com.digitaldude.docshield.data.ml.PdfTextExtractionDataSource
 import com.digitaldude.docshield.data.ml.RuleBasedCategorizerDataSource
 import com.digitaldude.docshield.data.ml.TextRecognitionDataSource
 import com.digitaldude.docshield.data.repository.AiRepositoryImpl
+import com.digitaldude.docshield.data.repository.CategoryRepositoryImpl
 import com.digitaldude.docshield.data.repository.DocumentRepositoryImpl
 import com.digitaldude.docshield.data.repository.ScanRepositoryImpl
 import com.digitaldude.docshield.domain.repository.AiRepository
+import com.digitaldude.docshield.domain.repository.CategoryRepository
 import com.digitaldude.docshield.domain.repository.DocumentRepository
 import com.digitaldude.docshield.domain.repository.ScanRepository
+import com.digitaldude.docshield.domain.usecase.AddCategoryUseCase
 import com.digitaldude.docshield.domain.usecase.AddDocumentUseCase
 import com.digitaldude.docshield.domain.usecase.CategorizeDocumentUseCase
+import com.digitaldude.docshield.domain.usecase.DeleteCategoryUseCase
 import com.digitaldude.docshield.domain.usecase.ExtractTextUseCase
+import com.digitaldude.docshield.domain.usecase.GetCategoriesUseCase
 import com.digitaldude.docshield.domain.usecase.GetDocumentsUseCase
 import dagger.Module
 import dagger.Provides
@@ -89,6 +94,24 @@ object AppModule {
     fun provideDocumentRepository(
         database: DocShieldDatabase
     ): DocumentRepository = DocumentRepositoryImpl(database.documentDao())
+
+    @Provides
+    @Singleton
+    fun provideCategoryRepository(
+        database: DocShieldDatabase
+    ): CategoryRepository = CategoryRepositoryImpl(database.categoryDao())
+
+    @Provides
+    fun provideGetCategoriesUseCase(repository: CategoryRepository): GetCategoriesUseCase =
+        GetCategoriesUseCase(repository)
+
+    @Provides
+    fun provideAddCategoryUseCase(repository: CategoryRepository): AddCategoryUseCase =
+        AddCategoryUseCase(repository)
+
+    @Provides
+    fun provideDeleteCategoryUseCase(repository: CategoryRepository): DeleteCategoryUseCase =
+        DeleteCategoryUseCase(repository)
 
     @Provides
     @Singleton
