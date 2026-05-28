@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 class BiometricAuthManager(private val context: Context) {
     private val resultChannel = Channel<BiometricResult>(Channel.CONFLATED)
     val authResult: Flow<BiometricResult> = resultChannel.receiveAsFlow()
+    private var activePrompt: BiometricPrompt? = null
 
     private val _isLocked = MutableStateFlow(false)
     val isLocked: StateFlow<Boolean> = _isLocked.asStateFlow()
@@ -59,6 +60,7 @@ class BiometricAuthManager(private val context: Context) {
             object : BiometricPrompt.AuthenticationCallback() {
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    activePrompt = null
                     unlock()
                     resultChannel.trySend(BiometricResult.Success)
                 }
@@ -68,6 +70,7 @@ class BiometricAuthManager(private val context: Context) {
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    activePrompt = null
                     val result = when (errorCode) {
                         BiometricPrompt.ERROR_HW_UNAVAILABLE,
                         BiometricPrompt.ERROR_HW_NOT_PRESENT -> BiometricResult.HardwareUnavailable
@@ -83,6 +86,7 @@ class BiometricAuthManager(private val context: Context) {
             }
         )
 
+        activePrompt = biometricPrompt
         biometricPrompt.authenticate(promptInfo)
     }
 }
