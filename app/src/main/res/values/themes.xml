@@ -2,4 +2,11 @@
 <resources>
 
     <style name="Theme.DocShield" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.DocShield.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#F8FAFC</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_docshield_splash</item>
+        <item name="postSplashScreenTheme">@style/Theme.DocShield</item>
+    </style>
+
 </resources>

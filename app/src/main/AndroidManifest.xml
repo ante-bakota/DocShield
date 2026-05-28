@@ -6,9 +6,7 @@
         android:name="android.hardware.camera"
         android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.INTERNET" />
-
-
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
         android:name=".DocShieldApplication"
@@ -25,7 +23,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.DocShield">
+            android:theme="@style/Theme.DocShield.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
