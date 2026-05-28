@@ -33,7 +33,7 @@ class ImportPdfViewModel @Inject constructor(
     private val _title = MutableStateFlow("")
     val title: StateFlow<String> = _title.asStateFlow()
 
-    private val _category = MutableStateFlow("Ostalo")
+    private val _category = MutableStateFlow("Other")
     val category: StateFlow<String> = _category.asStateFlow()
 
     private val _isAiLoading = MutableStateFlow(false)
@@ -80,7 +80,7 @@ class ImportPdfViewModel @Inject constructor(
         viewModelScope.launch {
             addDocumentUseCase(
                 Document(
-                    title = _title.value.ifBlank { "PDF dokument" },
+                    title = _title.value.ifBlank { "PDF document" },
                     extractedText = current.extractedText,
                     imageUris = current.pageImageUris.map { it.toString() },
                     category = _category.value,
@@ -94,7 +94,7 @@ class ImportPdfViewModel @Inject constructor(
     fun reset() {
         _state.value = ImportPdfState.Idle
         _title.value = ""
-        _category.value = "Ostalo"
+        _category.value = "Other"
         _aiSuggestedTitle.value = null
         _aiSuggestedCategory.value = null
     }

@@ -134,9 +134,9 @@ fun CategoryChip(
     accent: Color? = null
 ) {
     val resolvedAccent = accent ?: when (text.trim().lowercase()) {
-        "racun" -> DocAmber
-        "zdravlje" -> DocTeal
-        "osobne isprave" -> DocLavender
+        "invoice" -> DocAmber
+        "health" -> DocTeal
+        "identity" -> DocLavender
         else -> DocAmber
     }
     val textColor = if (isSystemInDarkTheme()) {

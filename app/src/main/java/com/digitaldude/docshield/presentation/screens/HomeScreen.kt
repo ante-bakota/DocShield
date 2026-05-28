@@ -77,6 +77,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -153,10 +154,10 @@ private data class CategoryDef(
 )
 
 private val categories = listOf(
-    CategoryDef("Racun",          "Račun",          Icons.Outlined.Receipt,       DocAmberBg,    DocAmber),
-    CategoryDef("Zdravlje",       "Zdravlje",        Icons.Outlined.LocalHospital, DocTealBg,     DocTealDark),
-    CategoryDef("Osobne isprave", "Osobne isprave",  Icons.Outlined.Badge,         DocLavenderBg, DocLavenderDark),
-    CategoryDef("Ostalo",         "Ostalo",          Icons.Outlined.FolderOpen,    DocGrayBg,     DocGray)
+    CategoryDef("Invoice",  "Invoice",  Icons.Outlined.Receipt,       DocAmberBg,    DocAmber),
+    CategoryDef("Health",   "Health",   Icons.Outlined.LocalHospital, DocTealBg,     DocTealDark),
+    CategoryDef("Identity", "Identity", Icons.Outlined.Badge,         DocLavenderBg, DocLavenderDark),
+    CategoryDef("Other",    "Other",    Icons.Outlined.FolderOpen,    DocGrayBg,     DocGray)
 )
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -420,13 +421,13 @@ private fun BottomNavItem(
             modifier = Modifier
                 .size(36.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(if (selected) DocTeal.copy(alpha = 0.18f) else Color.Transparent),
+                .background(if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (selected) DocTealDark else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp)
             )
         }
@@ -434,7 +435,7 @@ private fun BottomNavItem(
             text = label,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color = if (selected) DocTealDark else MaterialTheme.colorScheme.onSurfaceVariant
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -650,18 +651,25 @@ private fun FolderCard(
 ) {
     VaultCard(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
             .border(
-                BorderStroke(1.5.dp, def.iconColor.copy(alpha = 0.35f)),
-                RoundedCornerShape(16.dp)
+                BorderStroke(2.dp, def.iconColor.copy(alpha = 0.6f)),
+                RoundedCornerShape(14.dp)
             )
             .clickable(onClick = onClick)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(30.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(def.bgColor),
                 contentAlignment = Alignment.Center
             ) {
@@ -669,20 +677,23 @@ private fun FolderCard(
                     imageVector = def.icon,
                     contentDescription = null,
                     tint = def.iconColor,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(17.dp)
                 )
             }
-            Spacer(Modifier.height(10.dp))
             Text(
                 text = def.displayName,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
             Text(
-                text = "$count documents",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = "$count",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = def.iconColor
             )
         }
     }

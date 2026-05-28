@@ -76,9 +76,9 @@ fun ScanScreen(
     val isAiLoading by viewModel.isAiLoading.collectAsState()
 
     var documentTitle by remember { mutableStateOf("") }
-    var documentCategory by remember { mutableStateOf("Ostalo") }
+    var documentCategory by remember { mutableStateOf("Other") }
     var zoomedImageUri by remember { mutableStateOf<String?>(null) }
-    val categories = listOf("Racun", "Zdravlje", "Osobne isprave", "Ostalo")
+    val categories = listOf("Invoice", "Health", "Identity", "Other")
 
     zoomedImageUri?.let { uri ->
         BasicAlertDialog(

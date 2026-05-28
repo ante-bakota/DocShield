@@ -34,10 +34,10 @@ class LlmInferenceDataSource(private val context : Context) {
 
     //    /data/data/com.digitaldude.docshield/files/gemma3-1b-it-int4.litertlm
         private val CATEGORY_MAP = mapOf(
-            "Invoice"  to "Racun",
-            "Health"   to "Zdravlje",
-            "Identity" to "Osobne isprave",
-            "Other"    to "Ostalo"
+            "Invoice" to "Invoice",
+            "Health" to "Health",
+            "Identity" to "Identity",
+            "Other" to "Other"
         )
 
     }
@@ -155,7 +155,7 @@ class LlmInferenceDataSource(private val context : Context) {
         val cleaned = response.trim().trimEnd('.', ',', '!', '?')
         return CATEGORY_MAP.entries.firstOrNull { (englishKey, _) ->
             cleaned.contains(englishKey, ignoreCase = true)
-        }?.value ?: "Ostalo"
+        }?.value ?: "Other"
     }
 
     /** Releases model resources. Call from ViewModel.onCleared(). */

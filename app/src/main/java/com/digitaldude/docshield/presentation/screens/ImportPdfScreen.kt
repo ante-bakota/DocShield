@@ -74,7 +74,7 @@ fun ImportPdfScreen(
     val aiSuggestedTitle by viewModel.aiSuggestedTitle.collectAsStateWithLifecycle()
     val aiSuggestedCategory by viewModel.aiSuggestedCategory.collectAsStateWithLifecycle()
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
-    val categories = listOf("Racun", "Zdravlje", "Osobne isprave", "Ostalo")
+    val categories = listOf("Invoice", "Health", "Identity", "Other")
 
     val pdfPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()

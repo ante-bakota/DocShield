@@ -8,7 +8,7 @@ class RuleBasedCategorizerDataSource{
     //Will implement media pipe soon
 
     private val categoryKeywords : Map<String, List<String>> = mapOf(
-        "Racun" to listOf(
+        "Invoice" to listOf(
             "račun", "faktura", "iznos", "ukupno", "pdv", "plaćanje",
             "invoice", "total", "amount", "payment", "due", "bill",
             "ugovor", "suglasnost", "ugovorne strane", "odredbe",
@@ -16,11 +16,11 @@ class RuleBasedCategorizerDataSource{
             "garancija", "jamstvo", "serijski broj",
             "warranty", "guarantee", "serial number"
         ),
-        "Zdravlje" to listOf(
+        "Health" to listOf(
             "dijagnoza", "pacijent", "liječnik", "recept", "nalaz", "terapija",
             "diagnosis", "patient", "doctor", "prescription", "medical"
         ),
-        "Osobne isprave" to listOf(
+        "Identity" to listOf(
             "osobna iskaznica", "putovnica", "vozačka dozvola", "oib",
             "passport", "id card", "driving license"
         )
@@ -40,7 +40,7 @@ class RuleBasedCategorizerDataSource{
         }
 
         val bestMatch = scores.maxByOrNull { it.value }
-        return if (bestMatch != null && bestMatch.value > 0) bestMatch.key else "Ostalo"
+        return if (bestMatch != null && bestMatch.value > 0) bestMatch.key else "Other"
     }
 
     private fun generateBasicTitle(text: String, category: String): String? {
